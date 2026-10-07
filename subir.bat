@@ -6,8 +6,8 @@ git init
 git add .
 git commit -m "Commit automatico"
 git branch -M main
-git remote add origin https://github.com/correodejulioioherrera-sys/%repo%.git
-git remote set-url origin https://github.com/correodejulioioherrera-sys/%repo%.git
+git remote add origin https://github.com/correodejulioherrera-sys/%repo%.git
+git remote set-url origin https://github.com/correodejulioherrera-sys/%repo%.git
 
 echo Subiendo archivos a GitHub...
 git push -u origin main
