@@ -1,0 +1,2428 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17110d">
+<title>Los signos de la madera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Young+Serif&display=swap">
+<style>
+/* Capa sobre la cámara: tablillas de madera oscura, texto en blanco hueso
+   (la pintura de los signos) y ocre de la roca para lo ya despertado.
+   Un solo aspecto oscuro, a propósito: se lee sobre cualquier imagen de cámara. */
+:root {
+  --madera: #17110d;
+  --madera-alta: #2b1f17;
+  --madera-panel: rgba(23, 17, 13, 0.84);
+  --madera-borde: rgba(243, 237, 226, 0.16);
+  --hueso: #f3ede2;
+  --hueso-tenue: #c4b9aa;
+  --ocre: #e2924f;
+  --lava: #ff8a3d;
+  --f-display: "Young Serif", Georgia, "Times New Roman", serif;
+  --f-texto: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radio: 14px;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--madera);
+  color: var(--hueso);
+  font: 16px/1.45 var(--f-texto);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--ocre); outline-offset: 3px; }
+
+/* ---------- Miniaturas de los signos (progreso) ---------- */
+.minis { display: flex; gap: 6px; align-items: center; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.minis::-webkit-scrollbar { display: none; }
+.mini {
+  flex: none; width: 34px; height: 34px; object-fit: cover; border-radius: 8px;
+  border: 2px solid var(--madera-borde); background: var(--madera-alta);
+  opacity: 0.5; filter: grayscale(1); transition: opacity 0.4s, filter 0.4s, border-color 0.4s, box-shadow 0.4s;
+}
+.mini.visto { opacity: 1; filter: none; border-color: var(--ocre); }
+.mini.activo { box-shadow: 0 0 0 3px rgba(255, 138, 61, 0.5); }
+.minis-grande { flex-wrap: wrap; justify-content: center; gap: 10px; overflow: visible; max-width: 34em; }
+.minis-grande .mini { width: 68px; height: 68px; border-radius: 12px; opacity: 1; filter: none; }
+.mini.mas { display: grid; place-items: center; opacity: 1; filter: none; font: 700 15px/1 var(--f-texto); color: var(--hueso); }
+body.muchos .barra .minis { display: none; }
+#subt-titulo[hidden] { display: none; }
+.tarjeta .minis { flex-wrap: wrap; justify-content: center; overflow: visible; }
+.tarjeta .mini { width: 44px; height: 44px; }
+
+/* ---------- Barra superior ---------- */
+.barra {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+  display: flex; align-items: center; gap: 14px;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 14px;
+  background: linear-gradient(to bottom, rgba(10, 7, 5, 0.78), rgba(10, 7, 5, 0));
+}
+.progreso { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.contador { font-size: 13px; letter-spacing: 0.04em; color: var(--hueso-tenue); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.boton-icono {
+  margin-left: auto; flex: none; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--madera-borde); background: var(--madera-panel);
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+}
+.boton-icono svg { width: 22px; height: 22px; }
+.boton-icono .tachado { display: none; }
+.boton-icono.apagado .ondas { display: none; }
+.boton-icono.apagado .tachado { display: inline; }
+
+/* ---------- Visor, retícula y pistas (AR) ---------- */
+.visor {
+  position: fixed; left: 50%; top: 47%; z-index: 4; pointer-events: none;
+  width: min(74vw, 380px); aspect-ratio: 2 / 1; max-width: 100%;
+  transform: translate(-50%, -50%);
+  --l: 30px; --g: 2px;
+  background:
+    linear-gradient(var(--hueso), var(--hueso)) left top / var(--l) var(--g) no-repeat,
+    linear-gradient(var(--hueso), var(--hueso)) left top / var(--g) var(--l) no-repeat,
+    linear-gradient(var(--hueso), var(--hueso)) right top / var(--l) var(--g) no-repeat,
+    linear-gradient(var(--hueso), var(--hueso)) right top / var(--g) var(--l) no-repeat,
+    linear-gradient(var(--hueso), var(--hueso)) left bottom / var(--l) var(--g) no-repeat,
+    linear-gradient(var(--hueso), var(--hueso)) left bottom / var(--g) var(--l) no-repeat,
+    linear-gradient(var(--hueso), var(--hueso)) right bottom / var(--l) var(--g) no-repeat,
+    linear-gradient(var(--hueso), var(--hueso)) right bottom / var(--g) var(--l) no-repeat;
+  opacity: 0.85;
+  animation: respirar 2.4s ease-in-out infinite;
+  transition: opacity 0.3s;
+}
+body.viendo .visor, body.lejos .visor { opacity: 0; animation: none; }
+@keyframes respirar { 50% { opacity: 0.45; } }
+
+.reticula {
+  position: fixed; left: 50%; top: 50%; z-index: 5; pointer-events: none;
+  width: 34vmin; height: 34vmin; transform: translate(-50%, -50%); --p: 0;
+}
+.reticula svg { width: 100%; height: 100%; overflow: visible; }
+.reticula .aro { fill: none; stroke: var(--hueso); stroke-opacity: 0.6; stroke-width: 1.4; stroke-dasharray: 2 4; }
+.reticula .carga {
+  fill: none; stroke: var(--ocre); stroke-width: 3.2; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: 50% 50%;
+  stroke-dasharray: 289; stroke-dashoffset: calc(289 * (1 - var(--p)));
+}
+.reticula.fijada .aro { stroke: var(--ocre); stroke-opacity: 0.95; stroke-dasharray: none; }
+
+.pista {
+  position: fixed; left: 16px; right: 16px; z-index: 9;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
+  width: fit-content; max-width: 30em; margin: 0 auto;
+  padding: 10px 18px; border-radius: 999px;
+  background: var(--madera-panel); border: 1px solid var(--madera-borde);
+  font-size: 15px; text-align: center; text-wrap: balance;
+  opacity: 0; transform: translateY(8px); transition: opacity 0.35s, transform 0.35s;
+  pointer-events: none;
+}
+.pista.visible { opacity: 1; transform: none; }
+
+/* ---------- Tablilla de subtítulos ---------- */
+.subtitulo {
+  position: fixed; left: 12px; right: 12px; z-index: 9;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  max-width: 560px; margin: 0 auto;
+  display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: start;
+  padding: 14px 18px 16px 14px;
+  background: var(--madera-panel); border: 1px solid var(--madera-borde); border-radius: var(--radio);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  opacity: 0; transform: translateY(14px); transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+.subtitulo.visible { opacity: 1; transform: none; }
+.subt-icono { width: 44px; height: 44px; }
+.subt-icono img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: 8px; }
+.subt-cuerpo { min-width: 0; }
+.subtitulo h2 { margin: 3px 0 5px; font: 400 21px/1.15 var(--f-display); text-wrap: balance; }
+.subtitulo p { margin: 0; font-size: 16.5px; line-height: 1.5; max-width: 62ch; }
+
+/* ---------- Pantallas: portada, avisos y final ---------- */
+.portada, .aviso {
+  position: fixed; inset: 0; z-index: 20; overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+  padding: calc(env(safe-area-inset-top, 0px) + 28px) 20px calc(env(safe-area-inset-bottom, 0px) + 28px);
+  text-align: center;
+}
+.portada { background: radial-gradient(130% 75% at 50% 8%, var(--madera-alta) 0%, var(--madera) 62%); justify-content: safe center; }
+.aviso { background: rgba(12, 9, 7, 0.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); z-index: 30; }
+.etiqueta { margin: 0; text-transform: uppercase; letter-spacing: 0.16em; font-size: 12px; font-weight: 700; color: var(--ocre); }
+.portada h1 { margin: -6px 0 0; font: 400 clamp(32px, 9vw, 52px)/1.04 var(--f-display); text-wrap: balance; max-width: 12em; }
+.intro { margin: 0; max-width: 33em; color: var(--hueso-tenue); font-size: 17px; text-wrap: pretty; }
+.boton {
+  appearance: none; border: 0; border-radius: 999px; cursor: pointer;
+  padding: 15px 28px; background: var(--hueso); color: var(--madera);
+  font: 400 18px/1 var(--f-display);
+  box-shadow: 0 0 0 5px rgba(243, 237, 226, 0.12);
+}
+.boton:active { transform: translateY(1px); }
+.nota { margin: 0; font-size: 13.5px; color: var(--hueso-tenue); }
+.tarjeta {
+  width: min(420px, 100%); display: grid; gap: 16px; justify-items: center;
+  padding: 26px 22px; border-radius: var(--radio);
+  background: var(--madera); border: 1px solid var(--madera-borde);
+}
+.tarjeta h2 { margin: 0; font: 400 24px/1.15 var(--f-display); text-wrap: balance; }
+.tarjeta p { margin: 0; }
+.girando {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 3px solid var(--madera-borde); border-top-color: var(--ocre);
+  animation: girar 0.9s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+.depuracion {
+  position: fixed; left: 8px; top: calc(env(safe-area-inset-top, 0px) + 70px); z-index: 40;
+  padding: 6px 10px; border-radius: 6px; background: rgba(0, 0, 0, 0.6);
+  font: 12px/1.3 ui-monospace, Menlo, Consolas, monospace; color: #9fe39f;
+}
+
+/* ---------- Idiomas: botones en la portada y menú en la barra ---------- */
+.idiomas { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 32em; }
+.idioma-op {
+  appearance: none; cursor: pointer; min-height: 38px; padding: 8px 15px; border-radius: 999px;
+  border: 1px solid var(--madera-borde); background: rgba(243, 237, 226, 0.04); color: var(--hueso-tenue);
+  font: 700 14px/1 var(--f-texto);
+}
+.idioma-op[aria-pressed="true"] { background: var(--hueso); border-color: var(--hueso); color: var(--madera); }
+.acciones-barra { margin-left: auto; flex: none; display: flex; gap: 8px; align-items: center; }
+.acciones-barra .boton-icono { margin-left: 0; }
+.menu-idioma { position: relative; }
+.boton-idioma { font: 700 13px/1 var(--f-texto); letter-spacing: 0.06em; }
+.lista-idioma {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 12;
+  min-width: 180px; max-height: min(60vh, 440px); overflow-y: auto;
+  margin: 0; padding: 6px; list-style: none;
+  background: var(--madera); border: 1px solid var(--madera-borde); border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.lista-idioma button {
+  width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 10px 12px; border: 0; border-radius: 8px; background: transparent;
+  color: var(--hueso); font-size: 15.5px; text-align: left; cursor: pointer;
+}
+.lista-idioma button:hover, .lista-idioma button:focus-visible { background: var(--madera-alta); }
+.lista-idioma button[aria-checked="true"]::after { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ocre); }
+
+/* ---------- Experiencia AR ---------- */
+#contenedor-ar { position: fixed; inset: 0; overflow: hidden; z-index: 0; background: #000; }
+#contenedor-ar a-scene { width: 100%; height: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .visor, .girando { animation: none; }
+  .subtitulo, .pista { transition: none; }
+}
+@media (min-width: 720px) {
+  .subtitulo h2 { font-size: 23px; }
+  .subtitulo p { font-size: 17.5px; }
+}
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe-v1.5.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<script>
+/* Generado con el Taller de signos. Puedes retocar los textos aquí mismo: cada uno va por idioma ({"es": "…", "en": "…"}). */
+window.HISTORIA = {
+  "version": 3,
+  "idiomas": [
+    "es",
+    "en"
+  ],
+  "titulo": {
+    "es": "Los signos de la madera",
+    "en": "Signs of the Wood"
+  },
+  "intro": {
+    "es": "Alguien pintó estos signos en la madera para que no se olvidaran. Nadie sabe con certeza qué significan, pero si los miras con calma, despiertan. Busca los cinco.",
+    "en": "Someone painted these signs on the wood so they would never be forgotten. No one knows for sure what they mean, but if you look at them patiently, they wake up. Find all five."
+  },
+  "final": {
+    "es": "Has descubierto los cinco signos. Ya conoces su historia. Ahora te toca contarla.",
+    "en": "You’ve discovered all five signs. Now you know their story. It’s your turn to tell it."
+  },
+  "voz": {
+    "velocidad": 0.96
+  },
+  "ajustesAR": {
+    "archivo": "targets.mind",
+    "seguimientoSimultaneo": 3,
+    "permanencia": 0.9,
+    "filtroMinCF": 0.0005,
+    "filtroBeta": 300
+  },
+  "sources": [
+    {
+      "id": "smuy5ndox6brv8",
+      "nombre": {
+        "es": "lateral esqueleto pajaro"
+      },
+      "miniatura": "marcadores/1-lateral-esqueleto-pajaro.jpg",
+      "apoyo": "pared",
+      "resultados": [
+        {
+          "id": "rmuy5o29y2jwef",
+          "tipo": "modelo",
+          "repetir": true,
+          "escala": 1.3,
+          "x": 0.32,
+          "y": -0.29,
+          "elevacion": 0.42,
+          "giro": -79,
+          "inclinacion": 9,
+          "archivo": "resultados/1-lateral-esqueleto-pajaro-1.glb"
+        },
+        {
+          "id": "rmuy5okpbiua6c",
+          "tipo": "efecto",
+          "efecto": "destello",
+          "escala": 1,
+          "x": 0,
+          "y": 0,
+          "giro": 0
+        }
+      ]
+    }
+  ]
+};
+</script>
+<script>
+(function motorSignos(window) {
+  'use strict';
+  const document = window.document;
+
+  const U = {
+    clamp: (x, a = 0, b = 1) => Math.min(b, Math.max(a, x)),
+    fase: (t, inicio, dur) => Math.min(1, Math.max(0, (t - inicio) / dur)),
+    suave: x => x * x * (3 - 2 * x),
+    salida: x => 1 - Math.pow(1 - x, 3),
+    rebote(x) { const c1 = 1.70158, c3 = c1 + 1; return x <= 0 ? 0 : 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); },
+    azar: (a, b) => a + Math.random() * (b - a),
+    rad: g => (g || 0) * Math.PI / 180,
+  };
+
+  /* ---------- Iconos de los efectos (24×24) ---------- */
+  const circ = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0z`;
+  const ICONOS = {
+    lluvia: [{ d: 'M6.2 20.5c1.7-4.4-.7-7.6 1.3-15.6M10.9 20.5c1.7-4.4-.7-7.6 1.3-15.6M15.6 20.5c1.7-4.4-.7-7.6 1.3-15.6' }],
+    espiral: [{ d: 'M10.4 12.8a1.6 1.6 0 0 1 3.2 0a3.2 3.2 0 0 1-6.4 0a4.8 4.8 0 0 1 9.6 0' }],
+    montana: [
+      { d: 'M12 3.4 21.6 20.2H2.4z' },
+      { d: 'M8.3 13.3h7.4L12 19.2z' },
+      { d: [circ(12, 7.9, 0.95), circ(10.2, 10.6, 0.95), circ(13.8, 10.6, 0.95), circ(6.1, 17.8, 0.95), circ(17.9, 17.8, 0.95)].join(''), relleno: true },
+    ],
+    vasija: [
+      { d: 'M9.4 3.8h5.2M10.1 3.8c0 2.7-4.8 3.9-4.8 8.8 0 4.4 3 7.6 6.7 7.6s6.7-3.2 6.7-7.6c0-4.9-4.8-6.1-4.8-8.8' },
+      { d: 'M6 11.4h12M6.9 15.4h10.2' },
+      { d: [circ(9.3, 13.4, 0.8), circ(12, 13.4, 0.8), circ(14.7, 13.4, 0.8)].join(''), relleno: true },
+    ],
+    mar: [{ d: circ(7.6, 12, 2.6) }, { d: 'M12.8 7.4c2 3 2 6.2 0 9.2M15.9 5.8c3 4 3 8.4 0 12.4M19 4.2c4 5 4 10.6 0 15.6' }],
+    destello: [{ d: 'M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5' }, { d: circ(12, 12, 1.6), relleno: true }],
+    ninguno: [{ d: circ(12, 12, 7.5) }, { d: 'M6.7 17.3 17.3 6.7' }],
+  };
+  ICONOS.volcan = ICONOS.montana;
+  // Iconos de los efectos nuevos (también son el brillo con que despierta cada uno)
+  Object.assign(ICONOS, {
+    fuego: [{ d: 'M12 2.8c.6 3.2 4.6 5 4.6 9.6a4.6 4.6 0 0 1-9.2 0c0-2.2 1.2-3.6 2.3-4.7.1 1.5.8 2.5 1.8 3.1-.4-2.8.1-5.2.5-8z' }, { d: 'M6.8 21 17.2 18.6M6.8 18.6 17.2 21' }],
+    fuegos: [{ d: 'M5 21 11 13.5' }, { d: 'M15.5 3v2.4M15.5 11.6V14M10 8.5h2.4M18.6 8.5H21M11.6 4.6l1.7 1.7M17.7 10.7l1.7 1.7M11.6 12.4l1.7-1.7M17.7 6.3l1.7-1.7' }],
+    mariposas: [{ d: 'M12 7.5v10' }, { d: 'M12 10C9.8 5.2 4 4.6 4.6 9.2c.4 3.1 3.9 3.6 7.4 2.3M12 10c2.2-4.8 8-5.4 7.4-.8-.4 3.1-3.9 3.6-7.4 2.3M12 12.5c-3 .4-5.9 2.4-4.4 5 1.1 1.9 3.5.6 4.4-2.2M12 12.5c3 .4 5.9 2.4 4.4 5-1.1 1.9-3.5.6-4.4-2.2' }, { d: 'M10.6 5.2 12 7.5l1.4-2.3' }],
+    pajaros: [{ d: 'M2.5 10.5c1.8-2.2 3.8-2.2 5.2 0 1.4-2.2 3.4-2.2 5.2 0M10.5 16.5c1.8-2.2 3.8-2.2 5.2 0 1.4-2.2 3.4-2.2 5.2 0' }],
+    estrellas: [{ d: 'M4 17.5 8.5 9l6 3.5 5.5-7' }, { d: [circ(4, 17.5, 1.3), circ(8.5, 9, 1.3), circ(14.5, 12.5, 1.3), circ(20, 5.5, 1.3)].join(''), relleno: true }],
+    planta: [{ d: 'M12 21v-9' }, { d: 'M12 12c0-4 3-7 7-7 0 4-3 7-7 7zM12 15.5c0-3-2.6-5.5-6-5.5 0 3.3 2.7 5.5 6 5.5z' }, { d: 'M7.5 21h9' }],
+    arcoiris: [{ d: 'M3 18a9 9 0 0 1 18 0M6.5 18a5.5 5.5 0 0 1 11 0M10 18a2 2 0 0 1 4 0' }],
+    faro: [{ d: 'M9.2 21 10.4 10.6h3.2L14.8 21zM7.4 21h9.2M9.7 15.8h4.6' }, { d: 'M10.4 10.6V7.6h3.2v3M9.9 7.6 12 5.4l2.1 2.2z' }, { d: 'M14.6 8.9 20.8 6.4v5zM9.4 8.9 3.2 6.4v5z' }],
+    peces: [{ d: 'M3.5 12c2.8-4.3 8.7-4.3 11.8 0-3.1 4.3-9 4.3-11.8 0zM15.3 12l4.7-3.2v6.4z' }, { d: circ(7.3, 11.2, 0.9), relleno: true }],
+    notas: [{ d: 'M9 17.5V6.2l10-2v11M9 9.2l10-2' }, { d: [circ(6.8, 17.5, 2.2), circ(16.8, 15.2, 2.2)].join(''), relleno: true }],
+    stickman: [{ d: circ(12, 4.8, 2.2) }, { d: 'M12 7v7M12 9.2 7.8 12M12 9.2l4.2 2.8M12 14l-3.4 6.3M12 14l3.4 6.3' }],
+  });
+
+  function iconoSVG(id, clase = '') {
+    const partes = (ICONOS[id] || []).map(p => p.relleno
+      ? `<path d="${p.d}" fill="currentColor" stroke="none"/>`
+      : `<path d="${p.d}"/>`).join('');
+    return `<svg class="${clase}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${partes}</svg>`;
+  }
+
+  /* ---------- Texturas compartidas ---------- */
+  const cache = {};
+  function lienzo(tam) { const c = document.createElement('canvas'); c.width = c.height = tam; return c; }
+  function prepararTextura(THREE, tex) {
+    if ('colorSpace' in tex && THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+    else if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+  function texBrillo(THREE) {
+    if (cache.brillo) return cache.brillo;
+    const c = lienzo(128), g = c.getContext('2d');
+    const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(255,255,255,1)');
+    gr.addColorStop(0.22, 'rgba(255,255,255,0.6)');
+    gr.addColorStop(0.55, 'rgba(255,255,255,0.12)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    return (cache.brillo = new THREE.CanvasTexture(c));
+  }
+  function texGlifo(THREE, id) {
+    const k = 'glifo-' + id;
+    if (cache[k]) return cache[k];
+    const c = lienzo(256), g = c.getContext('2d');
+    g.translate(128, 128); g.scale(8.5, 8.5); g.translate(-12, -12);
+    g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = 1.7;
+    g.shadowColor = 'rgba(255,236,210,0.95)'; g.shadowBlur = 14;
+    g.strokeStyle = g.fillStyle = '#f6f1e7';
+    for (const p of ICONOS[id] || []) { const ruta = new window.Path2D(p.d); p.relleno ? g.fill(ruta) : g.stroke(ruta); }
+    return (cache[k] = prepararTextura(THREE, new THREE.CanvasTexture(c)));
+  }
+  function brillo(THREE, color, tam, opacidad = 1) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texBrillo(THREE), color, transparent: true, opacity: opacidad, blending: THREE.AdditiveBlending, depthWrite: false }));
+    s.scale.setScalar(tam);
+    return s;
+  }
+  function textoVasija(THREE) {
+    if (cache.vasija) return cache.vasija;
+    const W = 512, H = 256, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    g.fillStyle = '#9b5a3a'; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 1400; i++) { // grano del barro
+      g.fillStyle = Math.random() < 0.5 ? 'rgba(60,28,16,0.10)' : 'rgba(255,214,170,0.07)';
+      g.fillRect(Math.random() * W, Math.random() * H, 2, 2);
+    }
+    const fila = v => (1 - v) * H;
+    g.strokeStyle = g.fillStyle = '#efe5d3'; g.lineCap = 'round'; g.lineWidth = 5;
+    const linea = v => { g.beginPath(); g.moveTo(0, fila(v)); g.lineTo(W, fila(v)); g.stroke(); };
+    linea(0.30); linea(0.62);
+    for (let x = 8; x < W; x += 22) { g.beginPath(); g.arc(x, fila(0.37), 3.6, 0, Math.PI * 2); g.fill(); }
+    g.beginPath();
+    for (let x = 0, i = 0; x <= W; x += 16, i++) g.lineTo(x, fila(i % 2 ? 0.5 : 0.56));
+    g.stroke();
+    for (let x = 6; x < W; x += 28) { g.beginPath(); g.moveTo(x, fila(0.7)); g.lineTo(x + 13, fila(0.7)); g.stroke(); }
+    return (cache.vasija = prepararTextura(THREE, new THREE.CanvasTexture(c)));
+  }
+  /* ---------- Texturas de los efectos nuevos ---------- */
+  function texLlama(THREE) { // lengua de fuego blanca: el color lo pone cada llama
+    if (cache.llama) return cache.llama;
+    const c = document.createElement('canvas'); c.width = 64; c.height = 128;
+    const g = c.getContext('2d');
+    const gr = g.createRadialGradient(32, 100, 2, 32, 86, 72);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.beginPath(); g.moveTo(32, 2);
+    g.bezierCurveTo(44, 34, 60, 62, 54, 94); g.quadraticCurveTo(48, 126, 32, 126); g.quadraticCurveTo(16, 126, 10, 94);
+    g.bezierCurveTo(4, 62, 20, 34, 32, 2); g.fill();
+    return (cache.llama = new THREE.CanvasTexture(c));
+  }
+  function texDisco(THREE, clave, r, v, b, a) { // círculo de color que se difumina en el borde (cielo, agua)
+    const k = 'disco-' + clave;
+    if (cache[k]) return cache[k];
+    const c = lienzo(128), g = c.getContext('2d');
+    const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, `rgba(${r},${v},${b},${a})`); gr.addColorStop(0.62, `rgba(${r},${v},${b},${a * 0.82})`); gr.addColorStop(1, `rgba(${r},${v},${b},0)`);
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    return (cache[k] = prepararTextura(THREE, new THREE.CanvasTexture(c)));
+  }
+  function texRayas(THREE) { // franjas rojas y blancas del faro
+    if (cache.rayas) return cache.rayas;
+    const c = document.createElement('canvas'); c.width = 8; c.height = 64;
+    const g = c.getContext('2d');
+    for (let i = 0; i < 4; i++) { g.fillStyle = i % 2 ? '#f3ede2' : '#c0392b'; g.fillRect(0, i * 16, 8, 16); }
+    return (cache.rayas = prepararTextura(THREE, new THREE.CanvasTexture(c)));
+  }
+  function texHaz(THREE) { // la luz del faro se apaga hacia lo lejos
+    if (cache.haz) return cache.haz;
+    const c = document.createElement('canvas'); c.width = 4; c.height = 64;
+    const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 64);
+    gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.45, 'rgba(255,255,255,0.32)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 4, 64);
+    return (cache.haz = new THREE.CanvasTexture(c));
+  }
+  function texNota(THREE, doble) { // ♪ o ♫ dibujadas (no dependen de ninguna fuente)
+    const k = doble ? 'nota2' : 'nota1';
+    if (cache[k]) return cache[k];
+    const c = lienzo(128), g = c.getContext('2d');
+    g.fillStyle = g.strokeStyle = '#ffffff'; g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = 9;
+    g.shadowColor = 'rgba(255,255,255,0.6)'; g.shadowBlur = 6;
+    const cabeza = (x, y) => { g.save(); g.translate(x, y); g.rotate(-0.4); g.beginPath(); g.ellipse(0, 0, 17, 12, 0, 0, Math.PI * 2); g.fill(); g.restore(); };
+    if (!doble) {
+      cabeza(46, 98);
+      g.beginPath(); g.moveTo(61, 92); g.lineTo(61, 16); g.stroke();
+      g.beginPath(); g.moveTo(61, 18); g.bezierCurveTo(70, 34, 98, 40, 86, 74); g.stroke();
+    } else {
+      cabeza(30, 102); cabeza(92, 90);
+      g.beginPath(); g.moveTo(45, 96); g.lineTo(45, 28); g.moveTo(107, 84); g.lineTo(107, 16); g.stroke();
+      g.lineWidth = 15; g.beginPath(); g.moveTo(45, 31); g.lineTo(107, 19); g.stroke();
+    }
+    return (cache[k] = new THREE.CanvasTexture(c));
+  }
+  function nube(THREE, mat) { // nube de bolas, como la de la lluvia
+    const n = new THREE.Group(), bola = new THREE.SphereGeometry(1, 16, 12);
+    [[0, 0, 0, 0.12], [0.13, -0.025, 0.01, 0.1], [-0.14, -0.03, 0, 0.095], [0.25, -0.055, 0, 0.07],
+     [-0.26, -0.055, 0, 0.065], [0.05, 0.075, -0.02, 0.09], [-0.08, 0.06, 0.02, 0.08]].forEach(([x, y, z, r]) => {
+      const b = new THREE.Mesh(bola, mat); b.position.set(x, y, z); b.scale.set(r * 1.25, r, r); n.add(b);
+    });
+    return n;
+  }
+
+  /* ---------- Efecto común: el signo despierta (anillo, halo y su icono) ---------- */
+  function despertar(THREE, g, idGlifo) {
+    const anillo = new THREE.Mesh(new THREE.RingGeometry(0.9, 1, 64), new THREE.MeshBasicMaterial({ color: 0xf3ede2, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
+    anillo.position.z = 0.012;
+    const halo = brillo(THREE, 0xfff1dc, 0.55, 0);
+    halo.position.z = 0.02;
+    g.add(anillo, halo);
+    let glifo = null;
+    if (idGlifo && ICONOS[idGlifo]) {
+      glifo = new THREE.Sprite(new THREE.SpriteMaterial({ map: texGlifo(THREE, idGlifo), transparent: true, opacity: 0, depthWrite: false }));
+      glifo.scale.setScalar(0.24);
+      g.add(glifo);
+    }
+    return t => {
+      const a = U.fase(t, 0, 1.1);
+      anillo.visible = a < 1;
+      anillo.scale.setScalar(0.06 + U.salida(a) * 0.36);
+      anillo.material.opacity = 0.9 * (1 - a);
+      halo.material.opacity = 0.6 * (1 - U.fase(t, 0.15, 1.8)) + 0.1;
+      if (glifo) {
+        const s = U.fase(t, 0, 1.6);
+        glifo.visible = s < 1;
+        glifo.position.set(0, 0.02 + U.salida(s) * 0.08, 0.03 + U.salida(s) * 0.16);
+        glifo.material.opacity = Math.sin(Math.PI * s) * 0.95;
+        glifo.scale.setScalar(0.18 + U.salida(s) * 0.12);
+      }
+    };
+  }
+
+  const oculto = (THREE) => cache.oculto || (cache.oculto = new THREE.Matrix4().makeScale(0, 0, 0));
+
+  /* =====================================================================
+     STICKMAN: figura de palitos animada por fotogramas (poses).
+     Ángulos en grados: 0 = hacia arriba, positivo = hacia la derecha.
+     El torso y los muslos van respecto al mundo; el resto, respecto a su
+     hueso padre (doblar el brazo arrastra el antebrazo). La cadera puede
+     moverse (x, y). Unidades de la figura: de los pies a la cadera ≈ 0,76.
+     ===================================================================== */
+  const STICK = (() => {
+    const HUESOS = [
+      { id: 'torso', desde: 'cadera', hasta: 'hombros', largo: 0.5, padre: null },
+      { id: 'cuello', desde: 'hombros', hasta: 'cabeza', largo: 0.24, padre: 'torso' },
+      { id: 'brazoI', desde: 'hombros', hasta: 'codoI', largo: 0.3, padre: 'torso' },
+      { id: 'anteI', desde: 'codoI', hasta: 'manoI', largo: 0.28, padre: 'brazoI' },
+      { id: 'brazoD', desde: 'hombros', hasta: 'codoD', largo: 0.3, padre: 'torso' },
+      { id: 'anteD', desde: 'codoD', hasta: 'manoD', largo: 0.28, padre: 'brazoD' },
+      { id: 'musloI', desde: 'cadera', hasta: 'rodillaI', largo: 0.38, padre: null },
+      { id: 'piernaI', desde: 'rodillaI', hasta: 'pieI', largo: 0.38, padre: 'musloI' },
+      { id: 'musloD', desde: 'cadera', hasta: 'rodillaD', largo: 0.38, padre: null },
+      { id: 'piernaD', desde: 'rodillaD', hasta: 'pieD', largo: 0.38, padre: 'musloD' },
+    ];
+    const RADIO_CABEZA = 0.13;
+    const JUNTAS = ['cadera', 'hombros', 'codoI', 'manoI', 'codoD', 'manoD', 'rodillaI', 'pieI', 'rodillaD', 'pieD'];
+    // Puntos que se pueden arrastrar en el editor: la cadera mueve la figura; los demás giran su hueso
+    const ASAS = [{ junta: 'cadera', mover: true }].concat(HUESOS.map(h => ({ junta: h.hasta, hueso: h.id, desde: h.desde, padre: h.padre })));
+    const COLORES = { hueso: '#f3ede2', ocre: '#e2924f', carbon: '#2f2a26', azul: '#4fa3e2', rojo: '#e05a4f', verde: '#5fbf7a', amarillo: '#f2c94c' };
+    const NOMBRES_COLOR = { hueso: 'Blanco hueso', ocre: 'Ocre', carbon: 'Carbón', azul: 'Azul', rojo: 'Rojo', verde: 'Verde', amarillo: 'Amarillo' };
+    const GROSORES = { fino: 0.6, normal: 1, grueso: 1.6 };
+    // P(torso, cabeza, brazoI, anteI, brazoD, anteD, musloI, piernaI, musloD, piernaD, x, y)
+    const P = (torso, cuello, bI, aI, bD, aD, mI, pI, mD, pD, x = 0, y = 0) =>
+      ({ x, y, a: { torso, cuello, brazoI: bI, anteI: aI, brazoD: bD, anteD: aD, musloI: mI, piernaI: pI, musloD: mD, piernaD: pD } });
+    const DE_PIE = () => P(0, 0, 195, -6, 165, 6, 188, -3, 172, 3);
+    const AGACHADO = () => P(0, 0, 215, -25, 145, 25, 228, -72, 132, 72, 0, -0.15);
+    const PLANTILLAS = {
+      quieto: { nombre: 'Quieto (respira)', duracion: 1.2, repetir: true, fotogramas: [DE_PIE(), P(0, 3, 198, -9, 162, 9, 188, -3, 172, 3, 0, 0.012)] },
+      saludar: { nombre: 'Saludar', duracion: 0.42, repetir: true, fotogramas: [P(0, -5, 195, -6, 38, -32, 188, -3, 172, 3), P(0, 4, 195, -6, 42, 18, 188, -3, 172, 3)] },
+      caminar: {
+        nombre: 'Caminar', duracion: 0.32, repetir: true, fotogramas: [
+          P(4, 0, 205, -15, 158, -28, 152, 0, 208, 28),
+          P(4, 0, 184, -12, 180, -12, 180, 0, 160, 42, 0, 0.03),
+          P(4, 0, 158, -28, 205, -15, 208, 28, 152, 0),
+          P(4, 0, 180, -12, 184, -12, 160, 42, 180, 0, 0, 0.03),
+        ],
+      },
+      correr: {
+        nombre: 'Correr', duracion: 0.2, repetir: true, fotogramas: [
+          P(14, -4, 225, -95, 132, -95, 138, 40, 218, 75, 0, 0.02),
+          P(14, -4, 180, -95, 180, -95, 176, 18, 165, 105, 0, 0.07),
+          P(14, -4, 132, -95, 225, -95, 218, 75, 138, 40, 0, 0.02),
+          P(14, -4, 180, -95, 180, -95, 165, 105, 176, 18, 0, 0.07),
+        ],
+      },
+      saltar: {
+        nombre: 'Saltar', duracion: 0.3, repetir: true, fotogramas: [
+          DE_PIE(), AGACHADO(),
+          P(0, 0, 330, 0, 30, 0, 186, 0, 174, 0, 0, 0.32),
+          P(0, 0, 318, 12, 42, -12, 205, -40, 155, 40, 0, 0.36),
+          AGACHADO(), DE_PIE(),
+        ],
+      },
+      bailar: {
+        nombre: 'Bailar', duracion: 0.36, repetir: true, fotogramas: [
+          P(-8, -8, 330, -15, 128, 62, 194, 0, 160, 32, -0.05, 0),
+          P(0, 0, 232, -62, 128, 62, 190, 0, 170, 0, 0, -0.03),
+          P(8, 8, 232, -62, 30, 15, 200, -32, 166, 0, 0.05, 0),
+          P(0, 0, 232, -62, 128, 62, 190, 0, 170, 0, 0, -0.03),
+        ],
+      },
+      senalar: { nombre: 'Señalar a un lado', duracion: 0.6, repetir: false, fotogramas: [DE_PIE(), P(0, 10, 195, -6, 92, -4, 190, -3, 172, 3)] },
+    };
+    const copia = o => JSON.parse(JSON.stringify(o));
+    function nuevo(plantilla) {
+      const p = PLANTILLAS[plantilla] || PLANTILLAS.saludar;
+      return { fotogramas: copia(p.fotogramas), duracion: p.duracion, repetir: p.repetir, color: 'hueso', grosor: 'normal' };
+    }
+    // Lo que venga guardado, completado con lo que falte (se llama en cada fotograma: así se ve al momento lo que cambies)
+    function normal(st) {
+      const s = Object.assign({}, st && typeof st === 'object' ? st : {});
+      if (!(s.duracion > 0)) s.duracion = 0.45;
+      if (typeof s.repetir !== 'boolean') s.repetir = true;
+      if (!COLORES[s.color]) s.color = 'hueso';
+      if (!GROSORES[s.grosor]) s.grosor = 'normal';
+      s.fotogramas = Array.isArray(s.fotogramas) ? s.fotogramas.filter(f => f && typeof f === 'object') : [];
+      if (!s.fotogramas.length) s.fotogramas = PLANTILLAS.quieto.fotogramas;
+      return s;
+    }
+    function articulaciones(p) {
+      const J = { cadera: { x: (p && p.x) || 0, y: (p && p.y) || 0 } }, abs = {}, a = (p && p.a) || {};
+      for (const h of HUESOS) {
+        const ang = (h.padre ? abs[h.padre] : 0) + (a[h.id] || 0);
+        abs[h.id] = ang;
+        const r = ang * Math.PI / 180, o = J[h.desde];
+        J[h.hasta] = { x: o.x + Math.sin(r) * h.largo, y: o.y + Math.cos(r) * h.largo };
+      }
+      const k = (HUESOS[1].largo - RADIO_CABEZA) / HUESOS[1].largo; // el cuello acaba donde empieza la cabeza
+      J.cuelloFin = { x: J.hombros.x + (J.cabeza.x - J.hombros.x) * k, y: J.hombros.y + (J.cabeza.y - J.hombros.y) * k };
+      J.abs = abs;
+      return J;
+    }
+    const corto = (a, b) => ((((b - a) % 360) + 540) % 360) - 180;
+    function interpolar(p1, p2, k) {
+      const a = {}, a1 = p1.a || {}, a2 = p2.a || {};
+      for (const h of HUESOS) { const x = a1[h.id] || 0; a[h.id] = x + corto(x, a2[h.id] || 0) * k; }
+      return { x: (p1.x || 0) + ((p2.x || 0) - (p1.x || 0)) * k, y: (p1.y || 0) + ((p2.y || 0) - (p1.y || 0)) * k, a };
+    }
+    function poseEn(st, t) {
+      const f = st.fotogramas, n = f.length;
+      if (n < 2) return f[0];
+      const d = Math.max(0.05, st.duracion || 0.45);
+      let u = Math.max(0, t) / d;
+      if (st.repetir !== false) u %= n;
+      else if (u >= n - 1) return f[n - 1];
+      const i = Math.floor(u);
+      return interpolar(f[i], f[(i + 1) % n], U.suave(u - i));
+    }
+    // La misma pose vista en un espejo: izquierda y derecha se cambian (la figura no se mueve de sitio)
+    function espejo(p) {
+      const a = p.a || {}, m = v => -(v || 0) || 0;
+      return {
+        x: p.x || 0, y: p.y || 0, a: {
+          torso: m(a.torso), cuello: m(a.cuello), brazoI: m(a.brazoD), anteI: m(a.anteD), brazoD: m(a.brazoI), anteD: m(a.anteI),
+          musloI: m(a.musloD), piernaI: m(a.piernaD), musloD: m(a.musloI), piernaD: m(a.piernaI),
+        },
+      };
+    }
+    const angulo = v => Math.round(((((v % 360) + 540) % 360) - 180) * 10) / 10; // entre -180 y 180, con un decimal
+    return { HUESOS, JUNTAS, ASAS, RADIO_CABEZA, COLORES, NOMBRES_COLOR, GROSORES, PLANTILLAS, nuevo, normal, articulaciones, interpolar, poseEn, espejo, angulo, fijo: {} };
+  })();
+
+  /* =====================================================================
+     EFECTOS INCLUIDOS. Cada uno crea sus objetos dentro de «g» y devuelve
+     una función (t, dt) que lo anima: t = segundos desde que el signo despertó.
+     ===================================================================== */
+  const ESCENAS = {
+    /* ---- 1 · La lluvia: una nube riega y el agua se va guardando ---- */
+    lluvia(THREE, g) {
+      const nube = new THREE.Group();
+      const matNube = new THREE.MeshStandardMaterial({ color: 0xebe6dd, roughness: 1, metalness: 0 });
+      const bola = new THREE.SphereGeometry(1, 18, 12);
+      [[0, 0, 0, 0.12], [0.13, -0.025, 0.01, 0.1], [-0.14, -0.03, 0, 0.095], [0.25, -0.055, 0, 0.07],
+       [-0.26, -0.055, 0, 0.065], [0.05, 0.075, -0.02, 0.09], [-0.08, 0.06, 0.02, 0.08]].forEach(([x, y, z, r]) => {
+        const b = new THREE.Mesh(bola, matNube); b.position.set(x, y, z); b.scale.set(r * 1.25, r, r); nube.add(b);
+      });
+      nube.position.set(0, 0.46, 0.16);
+      g.add(nube);
+
+      const N = 90, SUELO = -0.2, TECHO = 0.4;
+      const gotas = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.0035, 0.0035, 0.055, 5),
+        new THREE.MeshBasicMaterial({ color: 0xbfe7ff, transparent: true, opacity: 0.9 }), N);
+      gotas.frustumCulled = false;
+      g.add(gotas);
+      const d = [];
+      for (let i = 0; i < N; i++) d.push({ x: U.azar(-0.33, 0.33), z: U.azar(0.08, 0.26), y: TECHO + U.azar(0, 0.7), v: U.azar(0.75, 1.15) });
+
+      const charco = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({ color: 0x55c0d6, transparent: true, opacity: 0.5, depthWrite: false }));
+      charco.rotation.x = -Math.PI / 2 + 0.35; charco.position.set(0, SUELO, 0.17); charco.scale.setScalar(0.001);
+      g.add(charco);
+
+      const ondas = [], geoOnda = new THREE.RingGeometry(0.82, 1, 32);
+      for (let i = 0; i < 12; i++) {
+        const o = new THREE.Mesh(geoOnda, new THREE.MeshBasicMaterial({ color: 0xe6f7ff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
+        o.rotation.x = -Math.PI / 2 + 0.35; o.visible = false; g.add(o); ondas.push({ m: o, t: 9 });
+      }
+      let sig = 0;
+      const m4 = new THREE.Matrix4(), nada = oculto(THREE), desp = despertar(THREE, g, 'lluvia');
+
+      return (t, dt) => {
+        desp(t);
+        nube.scale.setScalar(Math.max(0.001, U.rebote(U.fase(t, 0.25, 0.9))));
+        nube.position.x = Math.sin(t * 0.6) * 0.03;
+        const llueve = t > 0.9;
+        for (let i = 0; i < N; i++) {
+          const p = d[i];
+          if (llueve) {
+            p.y -= p.v * dt;
+            if (p.y < SUELO) {
+              p.y = TECHO; p.x = U.azar(-0.32, 0.32) + nube.position.x;
+              if (Math.random() < 0.55) { const o = ondas[sig]; sig = (sig + 1) % ondas.length; o.t = 0; o.m.position.set(p.x * 0.75, SUELO + 0.002, p.z); }
+            }
+          }
+          if (!llueve || p.y > TECHO) gotas.setMatrixAt(i, nada);
+          else { m4.makeTranslation(p.x, p.y, p.z); gotas.setMatrixAt(i, m4); }
+        }
+        gotas.instanceMatrix.needsUpdate = true;
+        for (const o of ondas) {
+          o.t += dt; const a = o.t / 0.7;
+          o.m.visible = a < 1;
+          if (a < 1) { o.m.scale.setScalar(0.01 + a * 0.06); o.m.material.opacity = 0.8 * (1 - a); }
+        }
+        const c = U.salida(U.fase(t, 1.3, 7));
+        charco.scale.set(0.001 + c * 0.3, 0.001 + c * 0.13, 1);
+      };
+    },
+
+    /* ---- 2 · El remolino del tiempo: la espiral sale de la madera ---- */
+    espiral(THREE, g) {
+      const vueltas = 4.5, pts = [];
+      for (let i = 0; i <= 360; i++) {
+        const s = i / 360, a = s * vueltas * Math.PI * 2, r = 0.17 * (1 - 0.82 * s);
+        pts.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, 0.015 + s * 0.42));
+      }
+      const curva = new THREE.CatmullRomCurve3(pts);
+      const geo = new THREE.TubeGeometry(curva, 420, 0.009, 6, false);
+      const total = geo.index.count;
+      geo.setDrawRange(0, 0);
+      const giro = new THREE.Group();
+      giro.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xf3ede2 })));
+      g.add(giro);
+
+      const sol = new THREE.Mesh(new THREE.SphereGeometry(0.024, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd58a }));
+      sol.add(brillo(THREE, 0xffb35c, 0.24, 0.9));
+      sol.visible = false; giro.add(sol);
+
+      const lunas = [], geoLuna = new THREE.SphereGeometry(0.012, 10, 8);
+      for (let k = 1; k <= 12; k++) {
+        const l = new THREE.Mesh(geoLuna, new THREE.MeshBasicMaterial({ color: 0xc9d6e8, transparent: true, opacity: 0 }));
+        l.userData.u = k / 13; l.position.copy(curva.getPointAt(l.userData.u)); giro.add(l); lunas.push(l);
+      }
+      const desp = despertar(THREE, g, 'espiral');
+      return t => {
+        desp(t);
+        geo.setDrawRange(0, Math.floor(total * U.suave(U.fase(t, 0.3, 2.6)) / 3) * 3);
+        giro.rotation.z = -t * 0.35;
+        const vivo = t > 2.5;
+        sol.visible = vivo;
+        if (vivo) {
+          const u = ((t - 2.5) * 0.12) % 1;
+          sol.position.copy(curva.getPointAt(u));
+          for (const l of lunas) {
+            const cerca = Math.max(0, 1 - Math.abs(l.userData.u - u) * 14);
+            l.material.opacity = 0.35 + cerca * 0.65; l.scale.setScalar(1 + cerca * 1.2);
+          }
+        } else for (const l of lunas) l.material.opacity = U.fase(t, 2, 0.5) * 0.35;
+      };
+    },
+
+    /* ---- 3 · La montaña de fuego: un volcán brota del triángulo ---- */
+    volcan(THREE, g) {
+      const base = new THREE.Group(); base.position.set(0, -0.2, 0.2); g.add(base);
+      const perfil = [[0.27, 0], [0.24, 0.045], [0.19, 0.115], [0.13, 0.2], [0.085, 0.27], [0.072, 0.295], [0.052, 0.282], [0.02, 0.272], [0, 0.272]]
+        .map(([r, y]) => new THREE.Vector2(r, y));
+      const volcan = new THREE.Mesh(new THREE.LatheGeometry(perfil, 28), new THREE.MeshStandardMaterial({ color: 0x3e2c23, roughness: 0.95, metalness: 0, flatShading: true }));
+      base.add(volcan);
+      const lava = new THREE.Mesh(new THREE.CircleGeometry(0.058, 24), new THREE.MeshBasicMaterial({ color: 0xff6a1f }));
+      lava.rotation.x = -Math.PI / 2; lava.position.y = 0.277; volcan.add(lava);
+      const resplandor = brillo(THREE, 0xff7a2f, 0.55, 0); resplandor.position.y = 0.34; volcan.add(resplandor);
+
+      const coladas = [0.35, 2.45, 4.35].map((ang, i) => {
+        const pts = [];
+        for (let k = 0; k <= 14; k++) {
+          const s = k / 14, y = 0.285 - s * 0.27, r = 0.27 - 0.68 * y + 0.007, a = ang + Math.sin(s * 5 + i) * 0.16;
+          pts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
+        }
+        const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, 0.008, 5, false);
+        geo.setDrawRange(0, 0);
+        volcan.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xff8a3d })));
+        return geo;
+      });
+
+      const NB = 70, brasas = new THREE.InstancedMesh(new THREE.SphereGeometry(0.009, 6, 4), new THREE.MeshBasicMaterial({ color: 0xffb04a }), NB);
+      brasas.frustumCulled = false; base.add(brasas);
+      const B = Array.from({ length: NB }, () => ({ vida: U.azar(0, 1.6), viva: false }));
+
+      const NP = 24, piedras = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.013, 0), new THREE.MeshStandardMaterial({ color: 0x5b534d, roughness: 1, flatShading: true }), NP);
+      piedras.frustumCulled = false; base.add(piedras);
+      const P = Array.from({ length: NP }, () => ({ x: U.azar(-0.42, 0.42), y: U.azar(0.5, 1.4), z: U.azar(-0.12, 0.12), v: U.azar(0.18, 0.32), r: U.azar(0, 6) }));
+
+      const humo = Array.from({ length: 7 }, (_, i) => {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshBasicMaterial({ color: 0x8a817a, transparent: true, opacity: 0, depthWrite: false }));
+        m.userData.f = i / 7; base.add(m); return m;
+      });
+
+      const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v3 = new THREE.Vector3(), esc = new THREE.Vector3();
+      const nada = oculto(THREE), desp = despertar(THREE, g, 'montana');
+      return (t, dt) => {
+        desp(t);
+        const sube = U.rebote(U.fase(t, 0.3, 1.3));
+        volcan.scale.set(0.7 + 0.3 * sube, Math.max(0.001, sube), 0.7 + 0.3 * sube);
+        const fuego = U.fase(t, 1.6, 0.6);
+        resplandor.material.opacity = fuego * (0.6 + 0.3 * Math.sin(t * 9) * Math.sin(t * 3.7));
+        coladas.forEach((geo, i) => geo.setDrawRange(0, Math.floor(geo.index.count * U.fase(t, 1.9 + i * 0.5, 2.6) / 3) * 3));
+
+        for (let i = 0; i < NB; i++) {
+          const p = B[i];
+          if (t < 1.7) { brasas.setMatrixAt(i, nada); continue; }
+          p.vida -= dt;
+          if (p.vida <= 0) {
+            p.viva = true; p.vida = U.azar(0.9, 1.6);
+            p.x = U.azar(-0.03, 0.03); p.y = 0.29; p.z = U.azar(-0.03, 0.03);
+            p.vx = U.azar(-0.22, 0.22); p.vy = U.azar(0.55, 0.95); p.vz = U.azar(-0.22, 0.22);
+          }
+          if (!p.viva) { brasas.setMatrixAt(i, nada); continue; }
+          p.vy -= 1.3 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+          const s = U.clamp(p.vida * 1.5);
+          m4.makeScale(s, s, s).setPosition(p.x, p.y, p.z); brasas.setMatrixAt(i, m4);
+        }
+        brasas.instanceMatrix.needsUpdate = true;
+
+        for (let i = 0; i < NP; i++) {
+          const p = P[i];
+          if (t < 2.2) { piedras.setMatrixAt(i, nada); continue; }
+          p.y -= p.v * dt; p.r += dt * 2;
+          if (p.y < 0.01) { p.y = U.azar(0.65, 0.9); p.x = U.azar(-0.42, 0.42); }
+          e.set(p.r, p.r * 0.7, 0); q.setFromEuler(e); v3.set(p.x, p.y, p.z); esc.setScalar(p.y > 0.55 ? 0.001 : 1);
+          m4.compose(v3, q, esc); piedras.setMatrixAt(i, m4);
+        }
+        piedras.instanceMatrix.needsUpdate = true;
+
+        for (const h of humo) {
+          if (t < 1.6) { h.visible = false; continue; }
+          const f = ((t - 1.6) * 0.22 + h.userData.f) % 1;
+          h.visible = true;
+          h.position.set(Math.sin(f * 6 + h.userData.f * 9) * 0.04, 0.31 + f * 0.5, 0);
+          h.scale.setScalar(0.035 + f * 0.11);
+          h.material.opacity = 0.32 * (1 - f) * fuego;
+        }
+      };
+    },
+
+    /* ---- 4 · La vasija: una vasija decorada recoge el grano ---- */
+    vasija(THREE, g) {
+      const base = new THREE.Group(); base.position.set(0, -0.19, 0.19); g.add(base);
+      const perfil = [[0, 0], [0.07, 0.003], [0.12, 0.03], [0.16, 0.09], [0.172, 0.15], [0.16, 0.21], [0.12, 0.26], [0.085, 0.29], [0.08, 0.31], [0.095, 0.325], [0.09, 0.335]]
+        .map(([r, y]) => new THREE.Vector2(r, y));
+      const vasija = new THREE.Mesh(new THREE.LatheGeometry(perfil, 40), new THREE.MeshStandardMaterial({ map: textoVasija(THREE), roughness: 0.85, metalness: 0, side: THREE.DoubleSide }));
+      base.add(vasija);
+
+      const NG = 46, granos = new THREE.InstancedMesh(new THREE.SphereGeometry(0.008, 6, 4), new THREE.MeshStandardMaterial({ color: 0xe9c46a, roughness: 0.7 }), NG);
+      granos.frustumCulled = false; base.add(granos);
+      const G = Array.from({ length: NG }, () => ({ x0: U.azar(-0.2, 0.2), z0: U.azar(-0.08, 0.08), y: U.azar(0.75, 1.6), v: U.azar(0.3, 0.45) }));
+
+      const orbita = new THREE.Group(); orbita.position.y = 0.2; base.add(orbita);
+      const glifos = ['espiral', 'montana', 'lluvia'].map((id, i) => {
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texGlifo(THREE, id), transparent: true, opacity: 0, depthWrite: false }));
+        s.scale.setScalar(0.1); const a = i * Math.PI * 2 / 3; s.position.set(Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3);
+        orbita.add(s); return s;
+      });
+
+      const m4 = new THREE.Matrix4(), nada = oculto(THREE), desp = despertar(THREE, g, 'vasija');
+      return (t, dt) => {
+        desp(t);
+        const sube = U.rebote(U.fase(t, 0.3, 1.2));
+        vasija.scale.set(Math.max(0.001, 0.8 + 0.2 * sube), Math.max(0.001, sube), Math.max(0.001, 0.8 + 0.2 * sube));
+        vasija.rotation.y = t * 0.45;
+        for (let i = 0; i < NG; i++) {
+          const p = G[i];
+          if (t < 1.4) { granos.setMatrixAt(i, nada); continue; }
+          p.y -= p.v * dt;
+          if (p.y < 0.33) { p.y = U.azar(0.7, 0.95); p.x0 = U.azar(-0.2, 0.2); }
+          const k = U.clamp((0.72 - p.y) / 0.39); // se acercan a la boca al caer
+          if (p.y > 0.72) granos.setMatrixAt(i, nada);
+          else { m4.makeTranslation(p.x0 * (1 - k * 0.85), p.y, p.z0 * (1 - k * 0.85)); granos.setMatrixAt(i, m4); }
+        }
+        granos.instanceMatrix.needsUpdate = true;
+        orbita.rotation.y = -t * 0.6;
+        const o = U.fase(t, 1.8, 1.0);
+        glifos.forEach(s => { s.material.opacity = o * 0.9; });
+      };
+    },
+
+    /* ---- 5 · El mar: ondas desde el sol y una barca en el agua ---- */
+    mar(THREE, g) {
+      const sol = new THREE.Mesh(new THREE.SphereGeometry(0.055, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd27a }));
+      sol.add(brillo(THREE, 0xffa94d, 0.42, 0.85));
+      g.add(sol);
+      const ondas = Array.from({ length: 4 }, () => {
+        const o = new THREE.Mesh(new THREE.TorusGeometry(1, 0.02, 6, 72), new THREE.MeshBasicMaterial({ color: 0xbfeaf0, transparent: true, opacity: 0, depthWrite: false }));
+        g.add(o); return o;
+      });
+
+      const geoMar = new THREE.PlaneGeometry(1.0, 0.42, 40, 16);
+      geoMar.rotateX(-Math.PI / 2);
+      const pos = geoMar.attributes.position, base0 = Float32Array.from(pos.array);
+      const mar = new THREE.Mesh(geoMar, new THREE.MeshStandardMaterial({ color: 0x2c8a99, roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.9, flatShading: true, side: THREE.DoubleSide }));
+      mar.position.set(0, -0.2, 0.2); mar.rotation.x = 0.35; g.add(mar);
+      const altura = (x, z, t) => 0.018 * Math.sin(x * 9 + t * 1.7) + 0.012 * Math.sin(z * 13 - t * 1.3 + x * 2);
+
+      const barca = new THREE.Group();
+      const casco = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.13, 14, 1, false, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x6b4428, roughness: 0.9, side: THREE.DoubleSide }));
+      casco.rotation.z = -Math.PI / 2;
+      const forma = new THREE.Shape(); forma.moveTo(0, 0); forma.lineTo(0, 0.11); forma.lineTo(0.07, 0.012); forma.lineTo(0, 0);
+      const vela = new THREE.Mesh(new THREE.ShapeGeometry(forma), new THREE.MeshBasicMaterial({ color: 0xf3ede2, side: THREE.DoubleSide }));
+      vela.position.set(-0.01, 0.004, 0);
+      barca.add(casco, vela); barca.scale.setScalar(0.001); mar.add(barca);
+
+      const desp = despertar(THREE, g, 'mar');
+      return t => {
+        desp(t);
+        sol.position.set(0, U.salida(U.fase(t, 0.2, 1.0)) * 0.07, 0.16);
+        sol.scale.setScalar(Math.max(0.001, U.rebote(U.fase(t, 0.2, 0.8))));
+        ondas.forEach((o, i) => {
+          const f = t > 0.8 ? ((t - 0.8) / 2.4 + i / ondas.length) % 1 : -1;
+          o.visible = f >= 0;
+          if (f >= 0) { o.position.copy(sol.position); o.scale.set(0.08 + f * 0.45, 0.08 + f * 0.45, 1); o.material.opacity = 0.75 * (1 - f); }
+        });
+        const aparece = U.salida(U.fase(t, 0.6, 1.2));
+        mar.scale.set(Math.max(0.001, aparece), 1, Math.max(0.001, aparece));
+        for (let i = 0; i < pos.count; i++) pos.setY(i, altura(base0[i * 3], base0[i * 3 + 2], t));
+        pos.needsUpdate = true;
+        const b = U.fase(t, 1.4, 0.8);
+        barca.scale.setScalar(Math.max(0.001, U.rebote(b)));
+        const x = -0.4 + (((t - 1.4) * 0.05) % 0.8 + 0.8) % 0.8;
+        barca.position.set(x, altura(x, 0.02, t) + 0.006, 0.02);
+        barca.rotation.z = Math.atan(0.018 * 9 * Math.cos(x * 9 + t * 1.7)) * 0.8;
+      };
+    },
+  };
+
+  /* ---- Destello: chispas que suben desde el dibujo ---- */
+  ESCENAS.destello = function (THREE, g) {
+    const N = 90;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({ size: 0.05, map: texBrillo(THREE), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true });
+    const puntos = new THREE.Points(geo, mat);
+    puntos.frustumCulled = false;
+    g.add(puntos);
+    const P = Array.from({ length: N }, () => ({ fase: Math.random(), r: U.azar(0.05, 0.42), a: U.azar(0, Math.PI * 2), v: U.azar(0.2, 0.45) }));
+    const paleta = [0xfff1d0, 0xffc56b, 0xff8a3d].map(c => new THREE.Color(c));
+    P.forEach((p, i) => { const c = paleta[i % 3]; col.set([c.r, c.g, c.b], i * 3); });
+    const halo = brillo(THREE, 0xffd59a, 0.9, 0); halo.position.z = 0.05; g.add(halo);
+    const desp = despertar(THREE, g, 'destello');
+    return t => {
+      desp(t);
+      const on = U.fase(t, 0.2, 0.8);
+      halo.material.opacity = on * (0.45 + 0.2 * Math.sin(t * 3));
+      for (let i = 0; i < N; i++) {
+        const p = P[i], f = (t * p.v * 0.6 + p.fase) % 1, ang = p.a + t * 0.8 + f * 2.5, r = p.r * (0.3 + f);
+        pos[i * 3] = Math.cos(ang) * r;
+        pos[i * 3 + 1] = Math.sin(ang) * r * 0.6 + f * 0.25;
+        pos[i * 3 + 2] = 0.03 + f * 0.35;
+      }
+      geo.attributes.position.needsUpdate = true;
+      mat.opacity = on;
+      mat.size = 0.035 + 0.02 * Math.sin(t * 6);
+    };
+  };
+  ESCENAS.ninguno = function (THREE, g) { const desp = despertar(THREE, g, null); return t => desp(t); };
+
+  /* =====================================================================
+     EFECTOS NUEVOS
+     ===================================================================== */
+  Object.assign(ESCENAS, {
+    /* ---- Fuego: una hoguera con llamas, brasas que suben y humo ---- */
+    fuego(THREE, g) {
+      const base = new THREE.Group(); base.position.set(0, -0.2, 0.17); g.add(base);
+      const matLeno = new THREE.MeshStandardMaterial({ color: 0x5b3a22, roughness: 0.95 });
+      const geoLeno = new THREE.CylinderGeometry(0.016, 0.02, 0.24, 8);
+      [0, 1.05, 2.1].forEach(a => {
+        const p = new THREE.Group(); p.rotation.y = a;
+        const l = new THREE.Mesh(geoLeno, matLeno); l.rotation.z = Math.PI / 2; l.position.y = 0.018; p.add(l); base.add(p);
+      });
+      const matPiedra = new THREE.MeshStandardMaterial({ color: 0x6d655d, roughness: 1, flatShading: true });
+      for (let i = 0; i < 9; i++) {
+        const a = i / 9 * Math.PI * 2, p = new THREE.Mesh(new THREE.DodecahedronGeometry(U.azar(0.014, 0.02), 0), matPiedra);
+        p.position.set(Math.cos(a) * 0.13, 0.008, Math.sin(a) * 0.1); base.add(p);
+      }
+      // Lenguas de fuego: rojas y anchas por fuera, amarillas y cortas por dentro; cada una se mece desde su base
+      const llamas = [];
+      [[0xff3d12, 0.7, 0.085, 0.3, 6, 0.055], [0xff7a1a, 0.75, 0.065, 0.24, 5, 0.04], [0xffc85a, 0.8, 0.045, 0.16, 4, 0.024], [0xfff3d6, 0.6, 0.026, 0.085, 2, 0.008]]
+        .forEach(([color, op, w, h, n, sep]) => {
+          for (let i = 0; i < n; i++) {
+            const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texLlama(THREE), color, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false }));
+            s.center.set(0.5, 0.04);
+            const k = n > 1 ? (i / (n - 1)) * 2 - 1 : 0;
+            s.userData = { w: w * U.azar(0.85, 1.15), h: h * (1 - Math.abs(k) * 0.35) * U.azar(0.9, 1.1), x: k * sep, f: U.azar(0, 6.28), v: U.azar(7, 11) };
+            s.position.set(k * sep, 0.022, U.azar(-0.02, 0.02));
+            base.add(s); llamas.push(s);
+          }
+        });
+      const resplandor = brillo(THREE, 0xff8a3d, 0.75, 0); resplandor.position.y = 0.1; base.add(resplandor);
+      const NB = 40, brasas = new THREE.InstancedMesh(new THREE.SphereGeometry(0.005, 6, 4), new THREE.MeshBasicMaterial({ color: 0xffb347 }), NB);
+      brasas.frustumCulled = false; base.add(brasas);
+      const B = Array.from({ length: NB }, () => ({ vida: U.azar(0, 2), t: 2, x: 0, y: 0.08, z: 0, vx: 0, vy: 0.2, vz: 0 }));
+      const humo = Array.from({ length: 6 }, (_, i) => {
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texBrillo(THREE), color: 0x7a716a, transparent: true, opacity: 0, depthWrite: false }));
+        s.userData.f = i / 6; base.add(s); return s;
+      });
+      const m4 = new THREE.Matrix4(), nada = oculto(THREE), desp = despertar(THREE, g, 'fuego');
+      return (t, dt) => {
+        desp(t);
+        const fuerza = U.salida(U.fase(t, 0.3, 1.2));
+        for (const s of llamas) {
+          const u = s.userData, p = 0.74 + 0.26 * Math.sin(t * u.v + u.f) * Math.sin(t * u.v * 0.61 + u.f * 2.3);
+          s.scale.set(Math.max(0.001, u.w * fuerza * (0.9 + 0.1 * p)), Math.max(0.001, u.h * fuerza * p), 1);
+          s.position.x = u.x + Math.sin(t * 2.3 + u.f) * 0.006;
+          s.material.rotation = Math.sin(t * 2.7 + u.f) * 0.13;
+        }
+        resplandor.material.opacity = fuerza * (0.55 + 0.15 * Math.sin(t * 11) * Math.sin(t * 4.3));
+        for (let i = 0; i < NB; i++) {
+          const p = B[i];
+          if (t < 0.8) { brasas.setMatrixAt(i, nada); continue; }
+          p.vida -= dt;
+          if (p.vida <= 0) {
+            p.vida = p.t = U.azar(1.0, 2.0);
+            p.x = U.azar(-0.04, 0.04); p.y = 0.08; p.z = U.azar(-0.04, 0.04);
+            p.vx = U.azar(-0.03, 0.03); p.vy = U.azar(0.18, 0.32); p.vz = U.azar(-0.03, 0.03);
+          }
+          p.x += (p.vx + Math.sin(t * 3 + i) * 0.02) * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+          const s = U.clamp(p.vida / p.t * 1.4);
+          m4.makeScale(s, s, s).setPosition(p.x, p.y, p.z); brasas.setMatrixAt(i, m4);
+        }
+        brasas.instanceMatrix.needsUpdate = true;
+        for (const h of humo) {
+          const f = ((t * 0.16) + h.userData.f) % 1;
+          h.visible = t > 1;
+          h.position.set(Math.sin(f * 5 + h.userData.f * 7) * 0.035, 0.28 + f * 0.4, 0);
+          h.scale.setScalar(0.07 + f * 0.2);
+          h.material.opacity = 0.32 * Math.sin(Math.PI * f) * fuerza;
+        }
+      };
+    },
+
+    /* ---- Fuegos artificiales: cohetes que suben y estallan en chispas con estela ---- */
+    fuegos(THREE, g) {
+      const COLORES = [0xffd166, 0xff6b6b, 0x7bdff2, 0xc3a6ff, 0x95e08a, 0xffffff].map(c => new THREE.Color(c));
+      const N = 70, ESTELA = 0.22, salvas = [];
+      const aditivo = { transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true };
+      for (let k = 0; k < 4; k++) {
+        const geo = new THREE.BufferGeometry(), pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        const mat = new THREE.PointsMaterial(Object.assign({ size: 0.05, map: texBrillo(THREE) }, aditivo));
+        const puntos = new THREE.Points(geo, mat); puntos.frustumCulled = false; g.add(puntos);
+        // Estela de cada chispa: un segmento que va de su color (cabeza) a negro (cola, que al sumar no se ve)
+        const geoE = new THREE.BufferGeometry(), posE = new Float32Array(N * 6), colE = new Float32Array(N * 6);
+        geoE.setAttribute('position', new THREE.BufferAttribute(posE, 3));
+        geoE.setAttribute('color', new THREE.BufferAttribute(colE, 3));
+        const matE = new THREE.LineBasicMaterial(aditivo);
+        const estelas = new THREE.LineSegments(geoE, matE); estelas.frustumCulled = false; g.add(estelas);
+        const cohete = brillo(THREE, 0xfff1c9, 0.07, 0); cohete.visible = false; g.add(cohete);
+        const flash = brillo(THREE, 0xffffff, 0.2, 0); flash.visible = false; g.add(flash);
+        salvas.push({ geo, pos, col, vel: new Float32Array(N * 3), mat, geoE, posE, colE, matE, cohete, flash, t: -0.35 - k * 0.6, estado: 0 });
+      }
+      const elegir = () => COLORES[Math.floor(Math.random() * COLORES.length)];
+      const estallar = s => {
+        for (let i = 0; i < N; i++) {
+          const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u), v = U.azar(0.22, 0.36);
+          s.vel[i * 3] = r * Math.cos(a) * v; s.vel[i * 3 + 1] = u * v; s.vel[i * 3 + 2] = r * Math.sin(a) * v * 0.7;
+          s.pos[i * 3] = s.x; s.pos[i * 3 + 1] = s.alto; s.pos[i * 3 + 2] = s.z;
+          const c = Math.random() < 0.7 ? s.c1 : s.c2;
+          s.col[i * 3] = s.colE[i * 6] = c.r; s.col[i * 3 + 1] = s.colE[i * 6 + 1] = c.g; s.col[i * 3 + 2] = s.colE[i * 6 + 2] = c.b;
+          s.colE[i * 6 + 3] = s.colE[i * 6 + 4] = s.colE[i * 6 + 5] = 0;
+        }
+        s.geo.attributes.color.needsUpdate = true; s.geoE.attributes.color.needsUpdate = true;
+        s.flash.material.color.copy(s.c1); s.flash.position.set(s.x, s.alto, s.z); s.flash.visible = true;
+      };
+      const desp = despertar(THREE, g, 'fuegos');
+      return (t, dt) => {
+        desp(t);
+        const freno = Math.pow(0.45, dt);
+        for (const s of salvas) {
+          s.t += dt;
+          if (s.t < 0) { s.cohete.visible = s.flash.visible = false; s.mat.opacity = s.matE.opacity = 0; continue; }
+          if (s.estado === 0) { s.x = U.azar(-0.3, 0.3); s.z = U.azar(0.1, 0.28); s.alto = U.azar(0.28, 0.55); s.c1 = elegir(); s.c2 = elegir(); s.estado = 1; }
+          if (s.estado === 1) {
+            const k = U.salida(Math.min(1, s.t / 0.75));
+            s.cohete.visible = true; s.cohete.material.opacity = 0.9;
+            s.cohete.position.set(s.x + Math.sin(s.t * 20) * 0.003, -0.24 + (s.alto + 0.24) * k, s.z);
+            if (s.t >= 0.75) { estallar(s); s.estado = 2; s.cohete.visible = false; }
+          } else if (s.estado === 2) {
+            const e = s.t - 0.75, P = s.pos, V = s.vel, Q = s.posE;
+            for (let i = 0; i < N * 3; i += 3) {
+              V[i + 1] -= 0.22 * dt;
+              V[i] *= freno; V[i + 1] *= freno; V[i + 2] *= freno;
+              P[i] += V[i] * dt; P[i + 1] += V[i + 1] * dt; P[i + 2] += V[i + 2] * dt;
+              const j = i * 2;
+              Q[j] = P[i]; Q[j + 1] = P[i + 1]; Q[j + 2] = P[i + 2];
+              Q[j + 3] = P[i] - V[i] * ESTELA; Q[j + 4] = P[i + 1] - V[i + 1] * ESTELA; Q[j + 5] = P[i + 2] - V[i + 2] * ESTELA;
+            }
+            s.geo.attributes.position.needsUpdate = true; s.geoE.attributes.position.needsUpdate = true;
+            const vida = Math.max(0, 1 - e / 1.7), chispeo = e > 0.9 ? 0.65 + 0.35 * Math.sin(e * 45) : 1;
+            s.mat.opacity = vida * chispeo; s.matE.opacity = vida * 0.9;
+            s.mat.size = 0.018 + 0.042 * Math.max(0, 1 - e / 1.8);
+            s.flash.visible = e < 0.3;
+            if (s.flash.visible) { s.flash.material.opacity = 1 - e / 0.3; s.flash.scale.setScalar(0.12 + e * 1.1); }
+            if (e > 1.8) { s.t = -U.azar(0.1, 0.8); s.estado = 0; s.mat.opacity = s.matE.opacity = 0; }
+          }
+        }
+      };
+    },
+
+    /* ---- Mariposas que salen de la imagen y revolotean ---- */
+    mariposas(THREE, g) {
+      const forma = new THREE.Shape();
+      forma.moveTo(0, 0.004);
+      forma.bezierCurveTo(0.012, 0.06, 0.085, 0.085, 0.1, 0.045);
+      forma.bezierCurveTo(0.11, 0.015, 0.07, 0.004, 0.035, 0);
+      forma.bezierCurveTo(0.075, -0.012, 0.085, -0.06, 0.05, -0.07);
+      forma.bezierCurveTo(0.03, -0.075, 0.008, -0.04, 0, -0.004);
+      const geoAla = new THREE.ShapeGeometry(forma, 12); geoAla.rotateX(Math.PI / 2);
+      const geoCuerpo = new THREE.CylinderGeometry(0.004, 0.003, 0.06, 6); geoCuerpo.rotateX(Math.PI / 2);
+      const matCuerpo = new THREE.MeshBasicMaterial({ color: 0x2a211b });
+      const lista = [0xff8c2a, 0x4fa3ff, 0xffd84a, 0xf3ede2, 0xc77dff, 0xff5c8a, 0x62d2a2].map((c, i) => {
+        const m = new THREE.Group();
+        const mat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+        const alaD = new THREE.Mesh(geoAla, mat), alaI = new THREE.Mesh(geoAla, mat); alaI.scale.x = -1;
+        m.add(alaD, alaI, new THREE.Mesh(geoCuerpo, matCuerpo));
+        m.scale.setScalar(0.001); g.add(m);
+        return { m, alaD, alaI, rx: U.azar(0.22, 0.42), ry: U.azar(0.08, 0.2), rz: U.azar(0.06, 0.14), w: U.azar(0.45, 0.85) * (i % 2 ? 1 : -1), f: U.azar(0, 6.28), cy: U.azar(0, 0.25), aleteo: U.azar(10, 14), inicio: 0.3 + i * 0.18 };
+      });
+      const camino = (b, t, out) => out.set(b.rx * Math.sin(b.w * t + b.f), b.cy + b.ry * Math.sin(b.w * 2 * t + b.f * 1.7) * 0.6 + 0.04 * Math.sin(t * 0.7 + b.f), 0.17 + b.rz * Math.cos(b.w * t + b.f));
+      const a = new THREE.Vector3(), b2 = new THREE.Vector3(), dir = new THREE.Vector3(), Z = new THREE.Vector3(0, 0, 1), origen = new THREE.Vector3(0, 0, 0.03);
+      const desp = despertar(THREE, g, 'mariposas');
+      return t => {
+        desp(t);
+        for (const b of lista) {
+          const k = U.salida(U.fase(t, b.inicio, 1.6));
+          camino(b, t, a).lerpVectors(origen, a, k); camino(b, t + 0.06, b2).lerpVectors(origen, b2, k);
+          b.m.position.copy(a);
+          dir.subVectors(b2, a); if (dir.lengthSq() > 1e-10) b.m.quaternion.setFromUnitVectors(Z, dir.normalize());
+          const ale = 0.25 + 0.95 * Math.abs(Math.sin(t * b.aleteo + b.f));
+          b.alaD.rotation.z = ale; b.alaI.rotation.z = -ale;
+          b.m.scale.setScalar(Math.max(0.001, k));
+        }
+      };
+    },
+
+    /* ---- Gaviotas: una bandada que da vueltas sobre la imagen ---- */
+    pajaros(THREE, g) {
+      const forma = new THREE.Shape();
+      forma.moveTo(0, 0.014); forma.lineTo(0.05, 0.004); forma.lineTo(0.088, -0.012); forma.lineTo(0.045, -0.006); forma.lineTo(0, -0.012);
+      const geoAla = new THREE.ShapeGeometry(forma); geoAla.rotateX(Math.PI / 2);
+      const geoCuerpo = new THREE.SphereGeometry(1, 10, 8);
+      const matAla = new THREE.MeshBasicMaterial({ color: 0xf4f6f7, side: THREE.DoubleSide }), matCuerpo = new THREE.MeshBasicMaterial({ color: 0xdfe4e8 });
+      const matPunta = new THREE.MeshBasicMaterial({ color: 0x3a3f44, side: THREE.DoubleSide });
+      const punta = new THREE.Shape(); punta.moveTo(0.06, 0.0); punta.lineTo(0.088, -0.012); punta.lineTo(0.07, -0.009);
+      const geoPunta = new THREE.ShapeGeometry(punta); geoPunta.rotateX(Math.PI / 2); geoPunta.translate(0, 0.0005, 0);
+      const lista = [];
+      for (let i = 0; i < 9; i++) {
+        const m = new THREE.Group();
+        const c = new THREE.Mesh(geoCuerpo, matCuerpo); c.scale.set(0.011, 0.009, 0.03);
+        const d = new THREE.Group(), iz = new THREE.Group(); iz.scale.x = -1;
+        [d, iz].forEach(ala => ala.add(new THREE.Mesh(geoAla, matAla), new THREE.Mesh(geoPunta, matPunta)));
+        m.add(c, d, iz); m.scale.setScalar(0.001); g.add(m);
+        lista.push({ m, d, iz, f: i * 0.42, r: 0.36 + (i % 3) * 0.05, h: 0.32 + (i % 4) * 0.035, ale: U.azar(6, 8), fa: U.azar(0, 6) });
+      }
+      const camino = (p, t, out) => { const ang = t * 0.55 + p.f; return out.set(Math.cos(ang) * p.r, p.h + Math.sin(t * 1.3 + p.f) * 0.025, 0.2 + Math.sin(ang) * p.r * 0.55); };
+      const a = new THREE.Vector3(), b = new THREE.Vector3(), dir = new THREE.Vector3(), Z = new THREE.Vector3(0, 0, 1), origen = new THREE.Vector3(0, 0, 0.04);
+      const desp = despertar(THREE, g, 'pajaros');
+      return t => {
+        desp(t);
+        for (const p of lista) {
+          const k = U.salida(U.fase(t, 0.3 + p.f * 0.35, 1.8));
+          camino(p, t, a).lerpVectors(origen, a, k); camino(p, t + 0.05, b).lerpVectors(origen, b, k);
+          p.m.position.copy(a);
+          dir.subVectors(b, a); if (dir.lengthSq() > 1e-10) p.m.quaternion.setFromUnitVectors(Z, dir.normalize());
+          const amp = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * 0.8 + p.fa)); // ratos aleteando, ratos planeando
+          const ala = 0.12 + 0.55 * Math.sin(t * p.ale + p.fa) * amp;
+          p.d.rotation.z = ala; p.iz.rotation.z = -ala;
+          p.m.scale.setScalar(Math.max(0.001, k));
+        }
+      };
+    },
+
+    /* ---- Estrellas: se hace de noche, se dibuja una constelación y pasa una estrella fugaz ---- */
+    estrellas(THREE, g) {
+      const cielo = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), new THREE.MeshBasicMaterial({ map: texDisco(THREE, 'noche', 10, 22, 48, 0.88), transparent: true, opacity: 0, depthWrite: false }));
+      cielo.position.z = 0.008; g.add(cielo);
+      const N = 70, geo = new THREE.BufferGeometry(), pos = new Float32Array(N * 3), col = new Float32Array(N * 3), datos = [];
+      for (let i = 0; i < N; i++) {
+        const r = Math.sqrt(Math.random()) * 0.46, a = Math.random() * Math.PI * 2;
+        pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = Math.sin(a) * r * 0.9; pos[i * 3 + 2] = U.azar(0.02, 0.12);
+        datos.push({ b: U.azar(0.4, 1), f: U.azar(0, 6), v: U.azar(1.5, 4), tono: Math.random() });
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      const matE = new THREE.PointsMaterial({ size: 0.028, map: texBrillo(THREE), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true });
+      const puntos = new THREE.Points(geo, matE); puntos.frustumCulled = false; g.add(puntos);
+      // La Osa Mayor: siete estrellas y las líneas que las unen
+      const OSA = [[-0.34, 0.16], [-0.22, 0.2], [-0.1, 0.17], [0, 0.09], [0.04, -0.06], [0.22, -0.08], [0.25, 0.07]].map(([x, y]) => new THREE.Vector3(x, y, 0.1));
+      const brillantes = OSA.map(v => { const s = brillo(THREE, 0xfff6d8, 0.09, 0); s.position.copy(v); g.add(s); return s; });
+      const ruta = new THREE.CurvePath();
+      [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]].forEach(([i, j]) => ruta.add(new THREE.LineCurve3(OSA[i], OSA[j])));
+      const geoL = new THREE.TubeGeometry(ruta, 280, 0.0025, 5, false); geoL.setDrawRange(0, 0);
+      g.add(new THREE.Mesh(geoL, new THREE.MeshBasicMaterial({ color: 0xcfe3ff, transparent: true, opacity: 0.85 })));
+      const fugaz = [0, 1, 2, 3].map(i => { const s = brillo(THREE, 0xffffff, 0.05 - i * 0.008, 0); s.visible = false; g.add(s); return s; });
+      const c = new THREE.Color(), desp = despertar(THREE, g, 'estrellas');
+      return t => {
+        desp(t);
+        cielo.material.opacity = U.fase(t, 0.1, 1.0);
+        matE.opacity = U.fase(t, 0.4, 1.2);
+        for (let i = 0; i < N; i++) {
+          const s = datos[i], v = s.b * (0.55 + 0.45 * Math.sin(t * s.v + s.f));
+          c.setRGB(1, 0.95 + 0.05 * s.tono, 0.82 + 0.18 * s.tono).multiplyScalar(v);
+          col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+        }
+        geo.attributes.color.needsUpdate = true;
+        brillantes.forEach((s, i) => { s.material.opacity = U.fase(t, 1.2 + i * 0.25, 0.4) * (0.8 + 0.2 * Math.sin(t * 3 + i)); });
+        geoL.setDrawRange(0, Math.floor(geoL.index.count * U.suave(U.fase(t, 1.6, 3.2)) / 3) * 3);
+        const ff = (t - 3) % 5; // una estrella fugaz cada cinco segundos
+        fugaz.forEach((s, i) => {
+          const k = ff - i * 0.03, on = t > 3 && k > 0 && k < 0.9;
+          s.visible = on;
+          if (on) { s.position.set(0.4 - k * 0.8, 0.32 - k * 0.35, 0.14); s.material.opacity = Math.sin(Math.PI * k / 0.9) * (1 - i * 0.22); }
+        });
+      };
+    },
+
+    /* ---- Planta: brota un tallo, salen hojas y se abre una flor ---- */
+    planta(THREE, g) {
+      const base = new THREE.Group(); base.position.set(0, -0.21, 0.16); g.add(base);
+      const tierra = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x4a3426, roughness: 1 }));
+      tierra.scale.set(0.09, 0.035, 0.07); base.add(tierra);
+      const planta = new THREE.Group(); base.add(planta);
+      const tallo = new THREE.CatmullRomCurve3([[0, 0, 0], [0.025, 0.12, 0.01], [-0.02, 0.26, 0.02], [0.015, 0.4, 0.02], [0, 0.5, 0.02]].map(([x, y, z]) => new THREE.Vector3(x, y, z)));
+      const geoT = new THREE.TubeGeometry(tallo, 120, 0.008, 6, false); geoT.setDrawRange(0, 0);
+      planta.add(new THREE.Mesh(geoT, new THREE.MeshStandardMaterial({ color: 0x3f8f45, roughness: 0.7 })));
+      const forma = new THREE.Shape(); forma.moveTo(0, 0); forma.quadraticCurveTo(0.045, 0.035, 0.1, 0.004); forma.quadraticCurveTo(0.05, -0.03, 0, 0);
+      const geoH = new THREE.ShapeGeometry(forma, 10), matH = new THREE.MeshStandardMaterial({ color: 0x5fb04f, roughness: 0.6, side: THREE.DoubleSide });
+      const hojas = [0.22, 0.42, 0.6, 0.76].map((u, i) => {
+        const piv = new THREE.Group(); piv.position.copy(tallo.getPointAt(u)); piv.rotation.y = i % 2 ? Math.PI : 0;
+        const h = new THREE.Mesh(geoH, matH); h.rotation.z = 0.45; h.rotation.x = (i % 2 ? -1 : 1) * 0.25;
+        piv.add(h); piv.scale.setScalar(0.001); planta.add(piv);
+        return { piv, u };
+      });
+      const flor = new THREE.Group(); flor.position.copy(tallo.getPointAt(1)); flor.scale.setScalar(0.001); planta.add(flor);
+      flor.add(new THREE.Mesh(new THREE.SphereGeometry(0.02, 14, 10), new THREE.MeshStandardMaterial({ color: 0xffc93c, roughness: 0.5 })));
+      const geoP = new THREE.SphereGeometry(1, 12, 8), matP = new THREE.MeshStandardMaterial({ color: 0xff7aa2, roughness: 0.55 });
+      const petalos = Array.from({ length: 8 }, (_, i) => {
+        const piv = new THREE.Group(); piv.rotation.z = i * Math.PI / 4;
+        const bisagra = new THREE.Group(); piv.add(bisagra);
+        const p = new THREE.Mesh(geoP, matP); p.scale.set(0.034, 0.014, 0.006); p.position.x = 0.036; bisagra.add(p);
+        flor.add(piv); return bisagra;
+      });
+      const desp = despertar(THREE, g, 'planta');
+      return t => {
+        desp(t);
+        geoT.setDrawRange(0, Math.floor(geoT.index.count * U.suave(U.fase(t, 0.3, 2.4)) / 3) * 3);
+        hojas.forEach(h => h.piv.scale.setScalar(Math.max(0.001, U.rebote(U.fase(t, 0.3 + h.u * 2.4, 0.6)))));
+        flor.scale.setScalar(Math.max(0.001, U.rebote(U.fase(t, 2.6, 1.0))));
+        const abre = U.salida(U.fase(t, 2.7, 1.2));
+        petalos.forEach(b => { b.rotation.y = (1 - abre) * 1.25; });
+        planta.rotation.z = Math.sin(t * 1.2) * 0.035 * U.fase(t, 2.5, 1);
+      };
+    },
+
+    /* ---- Arcoíris: se dibuja de nube a nube ---- */
+    arcoiris(THREE, g) {
+      const arcos = [0xe74c3c, 0xf39c12, 0xf7d03c, 0x2ecc71, 0x3498db, 0x4b5bd6, 0x9b59b6].map((color, i) => {
+        const R = 0.4 - i * 0.019, pts = [];
+        for (let k = 0; k <= 64; k++) { const a = Math.PI - (k / 64) * Math.PI; pts.push(new THREE.Vector3(Math.cos(a) * R, Math.sin(a) * R * 0.95, 0)); }
+        const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 96, 0.0095, 6, false); geo.setDrawRange(0, 0);
+        const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.88 }));
+        m.position.set(0, -0.14, 0.14 + i * 0.001); g.add(m);
+        return geo;
+      });
+      const matN = new THREE.MeshStandardMaterial({ color: 0xf4f1ec, roughness: 1 });
+      const nubes = [-0.37, 0.37].map(x => { const n = nube(THREE, matN); n.scale.setScalar(0.001); n.position.set(x, -0.14, 0.16); g.add(n); return n; });
+      const chispas = Array.from({ length: 8 }, (_, i) => {
+        const s = brillo(THREE, 0xffffff, 0.05, 0), a = Math.PI * (0.1 + 0.8 * i / 7);
+        s.position.set(Math.cos(a) * 0.36, -0.14 + Math.sin(a) * 0.34, 0.16); g.add(s); return s;
+      });
+      const desp = despertar(THREE, g, 'arcoiris');
+      return t => {
+        desp(t);
+        nubes[0].scale.setScalar(Math.max(0.001, U.rebote(U.fase(t, 0.2, 0.7)) * 0.5));
+        arcos.forEach((geo, i) => geo.setDrawRange(0, Math.floor(geo.index.count * U.suave(U.fase(t, 0.5 + i * 0.06, 1.8)) / 3) * 3));
+        nubes[1].scale.setScalar(Math.max(0.001, U.rebote(U.fase(t, 2.0, 0.7)) * 0.5));
+        nubes.forEach((n, i) => { n.position.y = -0.14 + Math.sin(t * 0.9 + i) * 0.008; });
+        chispas.forEach((s, i) => { s.material.opacity = t > 2.6 ? Math.max(0, Math.sin(t * 2.4 + i * 1.7)) * 0.9 : 0; });
+      };
+    },
+
+    /* ---- Faro: sube de las rocas y su luz da vueltas ---- */
+    faro(THREE, g) {
+      const base = new THREE.Group(); base.position.set(0, -0.21, 0.18); g.add(base);
+      const matRoca = new THREE.MeshStandardMaterial({ color: 0x54504b, roughness: 1, flatShading: true });
+      for (let i = 0; i < 7; i++) {
+        const r = new THREE.Mesh(new THREE.DodecahedronGeometry(U.azar(0.025, 0.045), 0), matRoca), a = i / 7 * Math.PI * 2;
+        r.position.set(Math.cos(a) * 0.08, 0.01, Math.sin(a) * 0.06); r.rotation.set(U.azar(0, 3), U.azar(0, 3), 0); base.add(r);
+      }
+      const torre = new THREE.Group(); base.add(torre);
+      const perfil = [[0.072, 0], [0.068, 0.06], [0.06, 0.18], [0.052, 0.3]].map(([r, y]) => new THREE.Vector2(r, y));
+      const cuerpo = new THREE.Mesh(new THREE.LatheGeometry(perfil, 28), new THREE.MeshStandardMaterial({ map: texRayas(THREE), roughness: 0.6 }));
+      cuerpo.position.y = 0.02; torre.add(cuerpo);
+      const balcon = new THREE.Mesh(new THREE.CylinderGeometry(0.066, 0.066, 0.012, 24), new THREE.MeshStandardMaterial({ color: 0x2c2c2c, roughness: 0.7 }));
+      balcon.position.y = 0.326; torre.add(balcon);
+      const linterna = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.05, 18), new THREE.MeshBasicMaterial({ color: 0xfff0b3 }));
+      linterna.position.y = 0.357; torre.add(linterna);
+      const techo = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.05, 18), new THREE.MeshStandardMaterial({ color: 0xa1302a, roughness: 0.6 }));
+      techo.position.y = 0.407; torre.add(techo);
+      const luz = brillo(THREE, 0xffe9a3, 0.3, 0); luz.position.y = 0.357; torre.add(luz);
+      const geoHaz = new THREE.ConeGeometry(0.075, 0.62, 24, 1, true); geoHaz.translate(0, -0.31, 0); geoHaz.rotateZ(Math.PI / 2);
+      const matHaz = new THREE.MeshBasicMaterial({ map: texHaz(THREE), color: 0xfff3c2, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+      const haz = new THREE.Group(); haz.position.y = 0.357; torre.add(haz);
+      [0, Math.PI].forEach(r => { const m = new THREE.Mesh(geoHaz, matHaz); m.rotation.y = r; haz.add(m); });
+      const ondas = Array.from({ length: 3 }, () => {
+        const o = new THREE.Mesh(new THREE.RingGeometry(0.9, 1, 48), new THREE.MeshBasicMaterial({ color: 0xbfe7f0, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
+        o.rotation.x = -Math.PI / 2; o.position.y = 0.005; base.add(o); return o;
+      });
+      const desp = despertar(THREE, g, 'faro');
+      return t => {
+        desp(t);
+        torre.scale.set(1, Math.max(0.001, U.rebote(U.fase(t, 0.3, 1.2))), 1);
+        const enc = U.fase(t, 1.5, 0.6);
+        luz.material.opacity = enc * (0.75 + 0.25 * Math.sin(t * 5));
+        matHaz.opacity = enc * 0.75;
+        haz.rotation.y = t * 1.3;
+        ondas.forEach((o, i) => { const f = ((t * 0.35) + i / 3) % 1; o.scale.setScalar(0.09 + f * 0.22); o.material.opacity = 0.5 * (1 - f) * U.fase(t, 0.8, 0.6); });
+      };
+    },
+
+    /* ---- Peces: nadan en círculo entre burbujas ---- */
+    peces(THREE, g) {
+      const agua = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.9), new THREE.MeshBasicMaterial({ map: texDisco(THREE, 'agua', 30, 120, 170, 0.55), transparent: true, opacity: 0, depthWrite: false }));
+      agua.position.z = 0.008; g.add(agua);
+      const geoCuerpo = new THREE.SphereGeometry(1, 16, 12);
+      const formaCola = new THREE.Shape(); formaCola.moveTo(0, 0); formaCola.lineTo(-0.035, 0.024); formaCola.lineTo(-0.028, 0); formaCola.lineTo(-0.035, -0.024); formaCola.lineTo(0, 0);
+      const geoCola = new THREE.ShapeGeometry(formaCola); geoCola.rotateY(-Math.PI / 2);
+      const geoOjo = new THREE.SphereGeometry(0.004, 8, 6), matOjo = new THREE.MeshBasicMaterial({ color: 0x111111 });
+      const lista = [0xff8c42, 0xffd23f, 0x3fa7ff, 0xff6b9a, 0x2ec4b6, 0xf3ede2, 0xff8c42].map((c, i) => {
+        const mat = new THREE.MeshStandardMaterial({ color: c, roughness: 0.45, emissive: c, emissiveIntensity: 0.15, side: THREE.DoubleSide });
+        const m = new THREE.Group();
+        const cuerpo = new THREE.Mesh(geoCuerpo, mat); cuerpo.scale.set(0.012, 0.022, 0.042);
+        const cola = new THREE.Mesh(geoCola, mat); cola.position.z = -0.038;
+        const ojoI = new THREE.Mesh(geoOjo, matOjo), ojoD = new THREE.Mesh(geoOjo, matOjo);
+        ojoI.position.set(-0.01, 0.006, 0.026); ojoD.position.set(0.01, 0.006, 0.026);
+        m.add(cuerpo, cola, ojoI, ojoD); m.scale.setScalar(0.001); g.add(m);
+        return { m, cola, R: U.azar(0.2, 0.36), y: -0.12 + i * 0.05, w: U.azar(0.5, 0.8) * (i % 2 ? 1 : -1), f: U.azar(0, 6.28), inicio: 0.3 + i * 0.12 };
+      });
+      const NB = 26, burbujas = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ color: 0xe8fbff, transparent: true, opacity: 0.5, depthWrite: false }), NB);
+      burbujas.frustumCulled = false; g.add(burbujas);
+      const B = Array.from({ length: NB }, () => ({ x: U.azar(-0.35, 0.35), y: U.azar(-0.25, 0.4), z: U.azar(0.08, 0.3), r: U.azar(0.004, 0.011), v: U.azar(0.07, 0.14), f: U.azar(0, 6) }));
+      const camino = (p, t, out) => out.set(Math.cos(p.w * t + p.f) * p.R, p.y + Math.sin(t * 1.4 + p.f) * 0.02, 0.17 + Math.sin(p.w * t + p.f) * p.R * 0.6);
+      const a = new THREE.Vector3(), b = new THREE.Vector3(), dir = new THREE.Vector3(), Z = new THREE.Vector3(0, 0, 1), origen = new THREE.Vector3(0, 0, 0.03);
+      const m4 = new THREE.Matrix4(), nada = oculto(THREE), desp = despertar(THREE, g, 'peces');
+      return (t, dt) => {
+        desp(t);
+        agua.material.opacity = U.fase(t, 0.1, 1.0);
+        for (const p of lista) {
+          const k = U.salida(U.fase(t, p.inicio, 1.4));
+          camino(p, t, a).lerpVectors(origen, a, k); camino(p, t + 0.05, b).lerpVectors(origen, b, k);
+          p.m.position.copy(a);
+          dir.subVectors(b, a); if (dir.lengthSq() > 1e-10) p.m.quaternion.setFromUnitVectors(Z, dir.normalize());
+          p.cola.rotation.y = Math.sin(t * 9 + p.f) * 0.5;
+          p.m.scale.setScalar(Math.max(0.001, k));
+        }
+        for (let i = 0; i < NB; i++) {
+          const q = B[i];
+          if (t < 0.6) { burbujas.setMatrixAt(i, nada); continue; }
+          q.y += q.v * dt;
+          if (q.y > 0.45) { q.y = -0.25; q.x = U.azar(-0.35, 0.35); }
+          m4.makeScale(q.r, q.r, q.r).setPosition(q.x + Math.sin(t * 2 + q.f) * 0.01, q.y, q.z);
+          burbujas.setMatrixAt(i, m4);
+        }
+        burbujas.instanceMatrix.needsUpdate = true;
+      };
+    },
+
+    /* ---- Música: notas que suben bailando ---- */
+    notas(THREE, g) {
+      const COL = [0xf3ede2, 0xe2924f, 0x7bdff2, 0x95e08a, 0xffd166];
+      const N = 14, periodo = N * 0.32;
+      const lista = Array.from({ length: N }, (_, i) => {
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texNota(THREE, i % 3 === 0), color: COL[i % COL.length], transparent: true, opacity: 0, depthWrite: false }));
+        s.visible = false; g.add(s);
+        return { s, t0: 0.4 + i * 0.32, x0: U.azar(-0.12, 0.12), z: U.azar(0.08, 0.25), amp: U.azar(0.06, 0.14), f: U.azar(0, 6), vida: U.azar(2.6, 3.4), tam: U.azar(0.06, 0.09) };
+      });
+      const ondas = Array.from({ length: 3 }, () => {
+        const o = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 48), new THREE.MeshBasicMaterial({ color: 0xf3ede2, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
+        o.position.z = 0.015; g.add(o); return o;
+      });
+      const desp = despertar(THREE, g, 'notas');
+      return t => {
+        desp(t);
+        for (const n of lista) {
+          if (t < n.t0) { n.s.visible = false; continue; }
+          const e = (t - n.t0) % periodo, k = e / n.vida;
+          if (k > 1) { n.s.visible = false; continue; }
+          n.s.visible = true;
+          n.s.position.set(n.x0 + Math.sin(e * 2.2 + n.f) * n.amp * k, -0.04 + k * 0.55, n.z);
+          n.s.material.rotation = Math.sin(e * 3 + n.f) * 0.35;
+          const tam = n.tam * U.salida(Math.min(1, k * 4));
+          n.s.scale.set(Math.max(0.001, tam), Math.max(0.001, tam), 1);
+          n.s.material.opacity = Math.min(1, k * 6) * (1 - U.fase(k, 0.7, 0.3));
+        }
+        ondas.forEach((o, i) => { const f = ((t * 0.8) + i / 3) % 1; o.scale.setScalar(0.05 + f * 0.3); o.material.opacity = 0.45 * (1 - f) * U.fase(t, 0.3, 0.5); });
+      };
+    },
+
+    /* ---- Stickman: la figura de palitos que anima quien hace la experiencia ---- */
+    stickman(THREE, g, r) {
+      const K = 0.4, fig = new THREE.Group(); fig.position.z = 0.045; g.add(fig);
+      const mat = new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0 });
+      const geoHueso = new THREE.CylinderGeometry(1, 1, 1, 10), geoBola = new THREE.SphereGeometry(1, 16, 12);
+      const huesos = STICK.HUESOS.map(() => { const m = new THREE.Mesh(geoHueso, mat); fig.add(m); return m; });
+      const juntas = STICK.JUNTAS.map(() => { const m = new THREE.Mesh(geoBola, mat); fig.add(m); return m; });
+      const cabeza = new THREE.Mesh(geoBola, mat); fig.add(cabeza);
+      const A = new THREE.Vector3(), B = new THREE.Vector3(), D = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
+      let colorPuesto = null;
+      const desp = despertar(THREE, g, 'stickman');
+      return t => {
+        desp(t);
+        const st = STICK.normal(r && r.stickman); // se lee cada vez: lo que cambies en el editor se ve al momento
+        if (st.color !== colorPuesto) {
+          colorPuesto = st.color;
+          mat.color.set(STICK.COLORES[st.color] || STICK.COLORES.hueso);
+          mat.emissive.copy(mat.color).multiplyScalar(0.28);
+        }
+        const rad = 0.021 * (STICK.GROSORES[st.grosor] || 1) * K;
+        fig.scale.setScalar(Math.max(0.001, U.rebote(U.fase(t, 0.15, 0.7))));
+        const fijo = r ? STICK.fijo[r.id] : null; // en el taller, el fotograma que se está editando
+        const pose = fijo != null && st.fotogramas[fijo] ? st.fotogramas[fijo] : STICK.poseEn(st, Math.max(0, t - 0.5));
+        const J = STICK.articulaciones(pose);
+        STICK.HUESOS.forEach((h, i) => {
+          const p1 = J[h.desde], p2 = h.id === 'cuello' ? J.cuelloFin : J[h.hasta];
+          A.set(p1.x * K, p1.y * K, 0); B.set(p2.x * K, p2.y * K, 0);
+          D.subVectors(B, A);
+          const largo = D.length(), m = huesos[i];
+          m.position.addVectors(A, B).multiplyScalar(0.5);
+          m.scale.set(rad, Math.max(0.0001, largo), rad);
+          if (largo > 1e-6) m.quaternion.setFromUnitVectors(Y, D.divideScalar(largo));
+        });
+        STICK.JUNTAS.forEach((j, i) => { juntas[i].position.set(J[j].x * K, J[j].y * K, 0); juntas[i].scale.setScalar(rad); });
+        cabeza.position.set(J.cabeza.x * K, J.cabeza.y * K, 0);
+        cabeza.scale.setScalar(STICK.RADIO_CABEZA * K);
+      };
+    },
+  });
+
+  const EFECTOS = [
+    { id: 'lluvia', nombre: 'Lluvia', texto: 'Una nube riega la imagen y el agua se va juntando.' },
+    { id: 'espiral', nombre: 'Espiral', texto: 'Una espiral sale de la imagen y la recorre un sol.' },
+    { id: 'volcan', nombre: 'Volcán', texto: 'Un volcán brota con lava, piedras y humo.' },
+    { id: 'vasija', nombre: 'Vasija', texto: 'Una vasija decorada gira y recoge grano.' },
+    { id: 'mar', nombre: 'Mar', texto: 'Un sol lanza ondas sobre el mar y pasa una barca.' },
+    { id: 'destello', nombre: 'Destello', texto: 'Chispas que suben girando desde la imagen.' },
+    { id: 'fuego', nombre: 'Fuego', texto: 'Una hoguera prende entre piedras: llamas, brasas y humo.' },
+    { id: 'fuegos', nombre: 'Fuegos artificiales', texto: 'Cohetes que suben y estallan en colores.' },
+    { id: 'mariposas', nombre: 'Mariposas', texto: 'Mariposas de colores salen de la imagen y revolotean.' },
+    { id: 'pajaros', nombre: 'Gaviotas', texto: 'Una bandada de gaviotas da vueltas sobre la imagen.' },
+    { id: 'estrellas', nombre: 'Estrellas', texto: 'Se hace de noche, se dibuja una constelación y pasa una estrella fugaz.' },
+    { id: 'planta', nombre: 'Planta', texto: 'Brota un tallo, le salen hojas y se abre una flor.' },
+    { id: 'arcoiris', nombre: 'Arcoíris', texto: 'Un arcoíris se dibuja de nube a nube.' },
+    { id: 'faro', nombre: 'Faro', texto: 'Un faro sube de las rocas y su luz da vueltas.' },
+    { id: 'peces', nombre: 'Peces', texto: 'Peces de colores nadan en círculo entre burbujas.' },
+    { id: 'notas', nombre: 'Música', texto: 'Notas musicales que suben bailando.' },
+    { id: 'stickman', nombre: 'Stickman', texto: 'Una figura de palitos que animas tú, pose a pose.' },
+  ];
+
+  /* Tipos de resultado que puede mostrar un source */
+  const TIPOS = [
+    { id: 'video', nombre: 'Animación o vídeo', corto: 'Vídeo', texto: '.mp4 o .webm, hasta 20 MB. Se le puede quitar el fondo negro o verde.', acepta: '.mp4,.webm,video/mp4,video/webm', archivo: true },
+    { id: 'modelo', nombre: 'Modelo 3D', corto: '3D', texto: '.glb con sus animaciones (Maya, Cinema 4D, Blender), hasta 14 MB.', acepta: '.glb,model/gltf-binary', archivo: true },
+    { id: 'imagen', nombre: 'Imagen', corto: 'Imagen', texto: '.png con transparencia, .jpg o .webp, hasta 20 MB.', acepta: 'image/png,image/jpeg,image/webp,image/gif', archivo: true },
+    { id: 'audio', nombre: 'Audio', corto: 'Audio', texto: '.mp3, .m4a, .ogg o .wav, hasta 14 MB.', acepta: '.mp3,.m4a,.aac,.ogg,.wav,audio/*', archivo: true },
+    { id: 'texto', nombre: 'Texto', corto: 'Texto', texto: 'Título y texto en pantalla; el móvil puede leerlo en voz alta.', archivo: false },
+    { id: 'efecto', nombre: 'Efecto 3D', corto: 'Efecto', texto: 'Uno de los efectos incluidos (lluvia, fuego, mariposas, faro…) o un stickman que animas tú.', archivo: false },
+  ];
+  const ICONOS_TIPO = {
+    video: [{ d: 'M3 6.5a1.5 1.5 0 0 1 1.5-1.5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z' }, { d: 'm10 9.2 5 2.8-5 2.8z' }],
+    modelo: [{ d: 'M12 3 3.5 7.5v9L12 21l8.5-4.5v-9z' }, { d: 'M3.5 7.5 12 12l8.5-4.5M12 12v9' }],
+    imagen: [{ d: 'M3.5 5.5h17v13h-17z' }, { d: 'm3.5 16 5-5 4 4 3-3 5 5' }, { d: circ(15.5, 9, 1.4), relleno: true }],
+    audio: [{ d: 'M4 9.5h3.2L12 5.5v13l-4.8-4H4z' }, { d: 'M15.5 9a4 4 0 0 1 0 6M18.2 6.5a7.5 7.5 0 0 1 0 11' }],
+    texto: [{ d: 'M5 6h14M12 6v12M9 18h6' }],
+    efecto: ICONOS.destello,
+  };
+  Object.keys(ICONOS_TIPO).forEach(k => { ICONOS['tipo-' + k] = ICONOS_TIPO[k]; });
+
+  /* =====================================================================
+     IDIOMAS: los que puede tener la appweb, los textos de su interfaz
+     y la elección del idioma (enlace ?lang=, elección guardada, móvil).
+     Un texto traducible es {es: '…', en: '…'}; uno suelto es del principal.
+     ===================================================================== */
+  const IDIOMAS = [
+    { id: 'es', nombre: 'Español', es: 'Español', en: 'Spanish (Spain)', voz: ['es-ES', 'es'] },
+    { id: 'en', nombre: 'English', es: 'Inglés', en: 'British English', voz: ['en-GB', 'en-US', 'en'] },
+    { id: 'de', nombre: 'Deutsch', es: 'Alemán', en: 'German', voz: ['de-DE', 'de'] },
+    { id: 'fr', nombre: 'Français', es: 'Francés', en: 'French', voz: ['fr-FR', 'fr'] },
+    { id: 'it', nombre: 'Italiano', es: 'Italiano', en: 'Italian', voz: ['it-IT', 'it'] },
+    { id: 'pt', nombre: 'Português', es: 'Portugués', en: 'European Portuguese', voz: ['pt-PT', 'pt-BR', 'pt'] },
+    { id: 'nl', nombre: 'Nederlands', es: 'Neerlandés', en: 'Dutch', voz: ['nl-NL', 'nl'] },
+    { id: 'sv', nombre: 'Svenska', es: 'Sueco', en: 'Swedish', voz: ['sv-SE', 'sv'] },
+    { id: 'da', nombre: 'Dansk', es: 'Danés', en: 'Danish', voz: ['da-DK', 'da'] },
+    { id: 'nb', nombre: 'Norsk', es: 'Noruego', en: 'Norwegian (Bokmål)', voz: ['nb-NO', 'no-NO', 'nb', 'no'], alias: ['no', 'nn'] },
+    { id: 'pl', nombre: 'Polski', es: 'Polaco', en: 'Polish', voz: ['pl-PL', 'pl'] },
+  ];
+  const UI = {
+    es: {
+      etiqueta: 'Realidad aumentada', empezar: 'Empezar', nota: 'Usa la cámara trasera y sube el volumen.',
+      abriendo: 'Abriendo la cámara…', errorTitulo: 'No se pudo empezar', reintentar: 'Reintentar',
+      errorCamara: 'No se pudo abrir la cámara. Dale permiso de cámara a esta página en el navegador y vuelve a intentarlo. La página tiene que abrirse con https.',
+      errorMarcadores: 'No se pudieron cargar los marcadores. Comprueba que targets.mind está junto a index.html en el servidor.',
+      apunta: 'Apunta con la cámara a una de las imágenes.', centra: 'Centra una imagen en el círculo.',
+      quedan: 'Te quedan {n} por descubrir.', falta1: 'Te falta: {lista}.', faltan: 'Te faltan: {lista}.',
+      contador: '{n} de {total}', todas: 'Todas descubiertas', deNuevo: 'Empezar de nuevo',
+      silenciar: 'Silenciar la voz', activarVoz: 'Activar la voz', idioma: 'Idioma', unaImagen: 'una imagen', y: 'y',
+    },
+    en: {
+      etiqueta: 'Augmented reality', empezar: 'Start', nota: 'Use the rear camera and turn the volume up.',
+      abriendo: 'Opening the camera…', errorTitulo: 'Couldn’t start', reintentar: 'Try again',
+      errorCamara: 'The camera couldn’t be opened. Allow this page to use the camera in your browser and try again. The page must be opened over https.',
+      errorMarcadores: 'The markers couldn’t be loaded. Check that targets.mind is next to index.html on the server.',
+      apunta: 'Point the camera at one of the images.', centra: 'Centre an image in the circle.',
+      quedan: '{n} left to discover.', falta1: 'Still to find: {lista}.', faltan: 'Still to find: {lista}.',
+      contador: '{n} of {total}', todas: 'All discovered', deNuevo: 'Start again',
+      silenciar: 'Mute the voice', activarVoz: 'Turn the voice on', idioma: 'Language', unaImagen: 'an image', y: 'and',
+    },
+    de: {
+      etiqueta: 'Augmented Reality', empezar: 'Starten', nota: 'Nutze die Rückkamera und stell den Ton lauter.',
+      abriendo: 'Kamera wird geöffnet…', errorTitulo: 'Start nicht möglich', reintentar: 'Erneut versuchen',
+      errorCamara: 'Die Kamera konnte nicht geöffnet werden. Erlaube dieser Seite im Browser den Zugriff auf die Kamera und versuche es erneut. Die Seite muss über https geöffnet werden.',
+      errorMarcadores: 'Die Marker konnten nicht geladen werden. Prüfe, ob targets.mind neben index.html auf dem Server liegt.',
+      apunta: 'Richte die Kamera auf eines der Bilder.', centra: 'Bring ein Bild in die Mitte des Kreises.',
+      quedan: 'Noch {n} zu entdecken.', falta1: 'Es fehlt noch: {lista}.', faltan: 'Es fehlen noch: {lista}.',
+      contador: '{n} von {total}', todas: 'Alle entdeckt', deNuevo: 'Neu starten',
+      silenciar: 'Stimme stummschalten', activarVoz: 'Stimme einschalten', idioma: 'Sprache', unaImagen: 'ein Bild', y: 'und',
+    },
+    fr: {
+      etiqueta: 'Réalité augmentée', empezar: 'Commencer', nota: 'Utilisez la caméra arrière et montez le son.',
+      abriendo: 'Ouverture de la caméra…', errorTitulo: 'Impossible de démarrer', reintentar: 'Réessayer',
+      errorCamara: 'Impossible d’ouvrir la caméra. Autorisez cette page à utiliser la caméra dans le navigateur, puis réessayez. La page doit être ouverte en https.',
+      errorMarcadores: 'Impossible de charger les marqueurs. Vérifiez que targets.mind se trouve à côté d’index.html sur le serveur.',
+      apunta: 'Pointez la caméra vers l’une des images.', centra: 'Placez une image au centre du cercle.',
+      quedan: 'Encore {n} à découvrir.', falta1: 'Il reste : {lista}.', faltan: 'Il reste : {lista}.',
+      contador: '{n} sur {total}', todas: 'Toutes découvertes', deNuevo: 'Recommencer',
+      silenciar: 'Couper la voix', activarVoz: 'Activer la voix', idioma: 'Langue', unaImagen: 'une image', y: 'et',
+    },
+    it: {
+      etiqueta: 'Realtà aumentata', empezar: 'Inizia', nota: 'Usa la fotocamera posteriore e alza il volume.',
+      abriendo: 'Apertura della fotocamera…', errorTitulo: 'Impossibile iniziare', reintentar: 'Riprova',
+      errorCamara: 'Impossibile aprire la fotocamera. Consenti a questa pagina di usare la fotocamera nel browser e riprova. La pagina deve essere aperta in https.',
+      errorMarcadores: 'Impossibile caricare i marker. Controlla che targets.mind si trovi accanto a index.html sul server.',
+      apunta: 'Inquadra una delle immagini con la fotocamera.', centra: 'Porta un’immagine al centro del cerchio.',
+      quedan: 'Ne restano {n} da scoprire.', falta1: 'Manca ancora: {lista}.', faltan: 'Mancano ancora: {lista}.',
+      contador: '{n} di {total}', todas: 'Tutte scoperte', deNuevo: 'Ricomincia',
+      silenciar: 'Disattiva la voce', activarVoz: 'Attiva la voce', idioma: 'Lingua', unaImagen: 'un’immagine', y: 'e',
+    },
+    pt: {
+      etiqueta: 'Realidade aumentada', empezar: 'Começar', nota: 'Use a câmara traseira e aumente o volume.',
+      abriendo: 'A abrir a câmara…', errorTitulo: 'Não foi possível começar', reintentar: 'Tentar de novo',
+      errorCamara: 'Não foi possível abrir a câmara. Permita que esta página use a câmara no navegador e tente de novo. A página tem de ser aberta com https.',
+      errorMarcadores: 'Não foi possível carregar os marcadores. Verifique se o targets.mind está junto do index.html no servidor.',
+      apunta: 'Aponte a câmara para uma das imagens.', centra: 'Centre uma imagem no círculo.',
+      quedan: 'Faltam {n} por descobrir.', falta1: 'Falta: {lista}.', faltan: 'Faltam: {lista}.',
+      contador: '{n} de {total}', todas: 'Todas descobertas', deNuevo: 'Começar de novo',
+      silenciar: 'Silenciar a voz', activarVoz: 'Ativar a voz', idioma: 'Idioma', unaImagen: 'uma imagem', y: 'e',
+    },
+    nl: {
+      etiqueta: 'Augmented reality', empezar: 'Starten', nota: 'Gebruik de camera aan de achterkant en zet het geluid harder.',
+      abriendo: 'Camera wordt geopend…', errorTitulo: 'Starten is niet gelukt', reintentar: 'Opnieuw proberen',
+      errorCamara: 'De camera kon niet worden geopend. Geef deze pagina in je browser toegang tot de camera en probeer het opnieuw. De pagina moet via https worden geopend.',
+      errorMarcadores: 'De markers konden niet worden geladen. Controleer of targets.mind naast index.html op de server staat.',
+      apunta: 'Richt de camera op een van de afbeeldingen.', centra: 'Zet een afbeelding in het midden van de cirkel.',
+      quedan: 'Nog {n} te ontdekken.', falta1: 'Nog te vinden: {lista}.', faltan: 'Nog te vinden: {lista}.',
+      contador: '{n} van {total}', todas: 'Alles ontdekt', deNuevo: 'Opnieuw beginnen',
+      silenciar: 'Stem uitzetten', activarVoz: 'Stem aanzetten', idioma: 'Taal', unaImagen: 'een afbeelding', y: 'en',
+    },
+    sv: {
+      etiqueta: 'Förstärkt verklighet', empezar: 'Starta', nota: 'Använd den bakre kameran och höj volymen.',
+      abriendo: 'Öppnar kameran…', errorTitulo: 'Det gick inte att starta', reintentar: 'Försök igen',
+      errorCamara: 'Det gick inte att öppna kameran. Ge den här sidan tillgång till kameran i webbläsaren och försök igen. Sidan måste öppnas via https.',
+      errorMarcadores: 'Det gick inte att läsa in markörerna. Kontrollera att targets.mind ligger bredvid index.html på servern.',
+      apunta: 'Rikta kameran mot en av bilderna.', centra: 'Placera en bild mitt i cirkeln.',
+      quedan: '{n} kvar att upptäcka.', falta1: 'Kvar att hitta: {lista}.', faltan: 'Kvar att hitta: {lista}.',
+      contador: '{n} av {total}', todas: 'Alla upptäckta', deNuevo: 'Börja om',
+      silenciar: 'Stäng av rösten', activarVoz: 'Slå på rösten', idioma: 'Språk', unaImagen: 'en bild', y: 'och',
+    },
+    da: {
+      etiqueta: 'Udvidet virkelighed', empezar: 'Start', nota: 'Brug kameraet på bagsiden, og skru op for lyden.',
+      abriendo: 'Åbner kameraet…', errorTitulo: 'Kunne ikke starte', reintentar: 'Prøv igen',
+      errorCamara: 'Kameraet kunne ikke åbnes. Giv denne side adgang til kameraet i browseren, og prøv igen. Siden skal åbnes via https.',
+      errorMarcadores: 'Markørerne kunne ikke indlæses. Tjek, at targets.mind ligger ved siden af index.html på serveren.',
+      apunta: 'Peg kameraet mod et af billederne.', centra: 'Placer et billede midt i cirklen.',
+      quedan: '{n} tilbage at opdage.', falta1: 'Mangler stadig: {lista}.', faltan: 'Mangler stadig: {lista}.',
+      contador: '{n} af {total}', todas: 'Alle fundet', deNuevo: 'Start forfra',
+      silenciar: 'Slå stemmen fra', activarVoz: 'Slå stemmen til', idioma: 'Sprog', unaImagen: 'et billede', y: 'og',
+    },
+    nb: {
+      etiqueta: 'Utvidet virkelighet', empezar: 'Start', nota: 'Bruk kameraet på baksiden, og skru opp lyden.',
+      abriendo: 'Åpner kameraet…', errorTitulo: 'Kunne ikke starte', reintentar: 'Prøv igjen',
+      errorCamara: 'Kameraet kunne ikke åpnes. Gi denne siden tilgang til kameraet i nettleseren, og prøv igjen. Siden må åpnes med https.',
+      errorMarcadores: 'Markørene kunne ikke lastes inn. Sjekk at targets.mind ligger ved siden av index.html på serveren.',
+      apunta: 'Rett kameraet mot et av bildene.', centra: 'Plasser et bilde midt i sirkelen.',
+      quedan: '{n} igjen å oppdage.', falta1: 'Gjenstår: {lista}.', faltan: 'Gjenstår: {lista}.',
+      contador: '{n} av {total}', todas: 'Alle oppdaget', deNuevo: 'Start på nytt',
+      silenciar: 'Slå av stemmen', activarVoz: 'Slå på stemmen', idioma: 'Språk', unaImagen: 'et bilde', y: 'og',
+    },
+    pl: {
+      etiqueta: 'Rzeczywistość rozszerzona', empezar: 'Zacznij', nota: 'Użyj tylnego aparatu i podgłośnij dźwięk.',
+      abriendo: 'Otwieranie aparatu…', errorTitulo: 'Nie udało się rozpocząć', reintentar: 'Spróbuj ponownie',
+      errorCamara: 'Nie udało się otworzyć aparatu. Zezwól tej stronie na dostęp do aparatu w przeglądarce i spróbuj ponownie. Strona musi być otwarta przez https.',
+      errorMarcadores: 'Nie udało się wczytać znaczników. Sprawdź, czy plik targets.mind znajduje się obok index.html na serwerze.',
+      apunta: 'Skieruj aparat na jeden z obrazów.', centra: 'Umieść obraz na środku okręgu.',
+      quedan: 'Do odkrycia zostało: {n}.', falta1: 'Brakuje jeszcze: {lista}.', faltan: 'Brakuje jeszcze: {lista}.',
+      contador: '{n} z {total}', todas: 'Wszystkie odkryte', deNuevo: 'Zacznij od nowa',
+      silenciar: 'Wycisz głos', activarVoz: 'Włącz głos', idioma: 'Język', unaImagen: 'obraz', y: 'i',
+    },
+  };
+  const infoIdioma = id => IDIOMAS.find(i => i.id === id) || null;
+  // Resultados por idioma: ocultos en algunos idiomas y archivos con versión propia
+  const estaOculto = (r, l) => !!(l && Array.isArray(r.ocultoEn) && r.ocultoEn.includes(l));
+  const archivoEn = (r, l) => (l && r.variantes && r.variantes[l]) || r.archivo || null;
+
+  const CLAVE_IDIOMA = 'signos-idioma';
+  const Idioma = {
+    actual: 'es', principal: 'es', disponibles: ['es'],
+    iniciar(H) {
+      const lista = (H && Array.isArray(H.idiomas) ? H.idiomas : []).filter(id => infoIdioma(id));
+      this.disponibles = lista.length ? [...new Set(lista)] : ['es'];
+      this.principal = this.disponibles[0];
+      this.actual = this.detectar();
+      return this.actual;
+    },
+    // «en-GB» → «en»; solo vale si la appweb tiene ese idioma
+    normalizar(c) {
+      if (!c) return null;
+      const p = String(c).trim().toLowerCase().split(/[-_]/)[0];
+      const info = IDIOMAS.find(i => i.id === p || (i.alias || []).includes(p));
+      return info && this.disponibles.includes(info.id) ? info.id : null;
+    },
+    // Orden: ?lang= en el enlace (códigos QR), lo que eligió el visitante, idiomas del móvil y, si no, el principal
+    detectar() {
+      let enlace = null, guardado = null;
+      try { const q = new URLSearchParams(window.location.search); enlace = q.get('lang') || q.get('idioma'); } catch (e) { /* sin parámetros */ }
+      try { guardado = window.localStorage.getItem(CLAVE_IDIOMA); } catch (e) { /* sin almacenamiento */ }
+      const nav = window.navigator || {};
+      const movil = nav.languages && nav.languages.length ? [...nav.languages] : [nav.language || nav.userLanguage];
+      for (const c of [enlace, guardado, ...movil]) { const n = this.normalizar(c); if (n) return n; }
+      return this.principal;
+    },
+    cambiar(id, recordar) {
+      const n = this.normalizar(id);
+      if (!n) return false;
+      if (recordar) { try { window.localStorage.setItem(CLAVE_IDIOMA, n); } catch (e) { /* sin almacenamiento */ } }
+      if (n === this.actual) return false;
+      this.actual = n;
+      return true;
+    },
+    nombre: id => (infoIdioma(id) || { nombre: id }).nombre,
+    t(clave, datos) { // textos de la interfaz
+      const d = UI[this.actual] || UI.es;
+      let s = d[clave] != null ? d[clave] : (UI.es[clave] != null ? UI.es[clave] : clave);
+      if (datos) s = s.replace(/\{(\w+)\}/g, (m, k) => (datos[k] != null ? datos[k] : m));
+      return s;
+    },
+    // Idioma en el que está de verdad el texto que se muestra (el pedido, el principal o el primero que haya)
+    de(v, l) {
+      l = l || this.actual;
+      if (v == null || typeof v !== 'object') return this.principal;
+      if (v[l]) return l;
+      if (v[this.principal]) return this.principal;
+      return this.disponibles.find(k => v[k]) || Object.keys(v).find(k => v[k]) || l;
+    },
+    texto(v, l) {
+      if (v == null) return '';
+      if (typeof v !== 'object') return String(v);
+      return v[this.de(v, l)] || '';
+    },
+    lista(items) {
+      try { return new Intl.ListFormat(this.actual, { style: 'long', type: 'conjunction' }).format(items); }
+      catch (e) { return items.length < 2 ? items.join('') : items.slice(0, -1).join(', ') + ' ' + this.t('y') + ' ' + items[items.length - 1]; }
+    },
+  };
+
+  /* ---------- Vídeo: plano con el vídeo, con o sin fondo ---------- */
+  function materialVideo(THREE, tex, modo) {
+    const comun = { transparent: true, depthWrite: false, side: THREE.DoubleSide };
+    if (modo === 'pantalla') return new THREE.MeshBasicMaterial(Object.assign({ map: tex, blending: THREE.AdditiveBlending }, comun));
+    if (modo === 'croma') {
+      return new THREE.ShaderMaterial(Object.assign({
+        uniforms: { mapa: { value: tex } },
+        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: [
+          'uniform sampler2D mapa; varying vec2 vUv;',
+          'void main(){',
+          '  vec4 c = texture2D(mapa, vUv);',
+          '  float verde = c.g - max(c.r, c.b);',
+          '  float a = 1.0 - smoothstep(0.06, 0.2, verde);',
+          '  c.g = min(c.g, max(c.r, c.b) + 0.04);',
+          '  gl_FragColor = vec4(c.rgb, a);',
+          '  #include <colorspace_fragment>',
+          '}',
+        ].join('\n'),
+      }, comun));
+    }
+    return new THREE.MeshBasicMaterial(Object.assign({ map: tex }, comun));
+  }
+
+  const COLOCACION = { escala: 1, x: 0, y: 0, elevacion: 0.02, giro: 0, inclinacion: 0 };
+  function grupoPlano(THREE, raiz, a) { // plano sobre la imagen: posición, separación, giro e inclinación
+    const g = new THREE.Group();
+    g.position.set(a.x, a.y, a.elevacion);
+    raiz.add(g);
+    const pivote = new THREE.Group();
+    pivote.rotation.set(U.rad(a.inclinacion), 0, U.rad(a.giro));
+    pivote.scale.setScalar(a.escala);
+    g.add(pivote);
+    return pivote;
+  }
+
+  function crearVideo(THREE, raiz, r, url) {
+    const a = Object.assign({}, COLOCACION, { modo: 'normal', sonido: false, repetir: true }, r);
+    const video = document.createElement('video');
+    video.muted = !a.sonido; video.loop = a.repetir !== false; video.playsInline = true; video.preload = 'auto';
+    if (!a.sonido) video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.crossOrigin = 'anonymous';
+    video.src = url;
+    const tex = prepararTextura(THREE, new THREE.VideoTexture(video));
+    const plano = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), materialVideo(THREE, tex, a.modo));
+    plano.scale.set(1, 0.5625, 1);
+    video.addEventListener('loadedmetadata', () => plano.scale.set(1, (video.videoHeight / video.videoWidth) || 0.5625, 1));
+    grupoPlano(THREE, raiz, a).add(plano);
+    return {
+      medio: video,
+      activar() {
+        try { video.currentTime = 0; } catch (e) { /* aún sin datos */ }
+        const p = video.play();
+        if (p) p.catch(() => { if (!video.muted) { video.muted = true; video.play().catch(() => {}); } }); // sin permiso para sonar: sigue en silencio
+      },
+      desactivar() { video.pause(); },
+      actualizar() {},
+    };
+  }
+
+  function crearImagen(THREE, raiz, r, url) {
+    const a = Object.assign({}, COLOCACION, r);
+    const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+    const plano = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+    new THREE.TextureLoader().load(url, tex => {
+      prepararTextura(THREE, tex);
+      mat.map = tex; mat.needsUpdate = true;
+      const im = tex.image;
+      if (im && im.width) plano.scale.set(1, im.height / im.width, 1);
+    });
+    const pivote = grupoPlano(THREE, raiz, a);
+    pivote.add(plano);
+    return {
+      activar() {}, desactivar() {},
+      actualizar(t) { // aparece con un pequeño crecimiento
+        mat.opacity = U.fase(t, 0.1, 0.5);
+        pivote.scale.setScalar(a.escala * (0.86 + 0.14 * U.salida(U.fase(t, 0.1, 0.6))));
+      },
+    };
+  }
+
+  function crearModelo(THREE, raiz, r, url, suelo) {
+    const a = Object.assign({}, COLOCACION, { repetir: true }, r);
+    const g = new THREE.Group();
+    g.position.set(a.x, a.y, a.elevacion);
+    raiz.add(g);
+    const orient = new THREE.Group();
+    orient.rotation.x = (suelo ? Math.PI / 2 : 0) + U.rad(a.inclinacion);
+    const giro = new THREE.Group();
+    giro.rotation.y = U.rad(a.giro);
+    giro.scale.setScalar(a.escala);
+    orient.add(giro); g.add(orient);
+    let mezclador = null, acciones = [], activo = false;
+    const arrancar = () => acciones.forEach(x => {
+      x.reset();
+      if (a.repetir === false) { x.setLoop(THREE.LoopOnce, 1); x.clampWhenFinished = true; }
+      x.play();
+    });
+    if (THREE.GLTFLoader) {
+      new THREE.GLTFLoader().load(url, gltf => {
+        const modelo = gltf.scene;
+        // Se ajusta solo: lo más largo ocupa el 60 % del ancho de la imagen, apoyado en el punto de anclaje y delante de ella
+        const caja = new THREE.Box3().setFromObject(modelo), tam = caja.getSize(new THREE.Vector3()), cen = caja.getCenter(new THREE.Vector3());
+        const k = 0.6 / (Math.max(tam.x, tam.y, tam.z) || 1);
+        modelo.scale.multiplyScalar(k);
+        modelo.position.set(-cen.x * k, -caja.min.y * k, -caja.min.z * k);
+        giro.add(modelo);
+        if (gltf.animations && gltf.animations.length) {
+          mezclador = new THREE.AnimationMixer(modelo);
+          acciones = gltf.animations.map(c => mezclador.clipAction(c));
+          if (activo) arrancar();
+        }
+      }, undefined, err => console.error('[ar] No se pudo cargar el modelo 3D', err));
+    }
+    return {
+      activar() { activo = true; arrancar(); },
+      desactivar() { activo = false; },
+      actualizar(t, dt) { if (mezclador) mezclador.update(dt); },
+    };
+  }
+
+  function crearAudio(r, url) {
+    const audio = new window.Audio();
+    audio.preload = 'auto'; audio.loop = !!r.repetir; audio.src = url;
+    return {
+      medio: audio,
+      activar() { try { audio.currentTime = 0; } catch (e) { /* aún sin datos */ } const p = audio.play(); if (p) p.catch(() => {}); },
+      desactivar() { audio.pause(); },
+      actualizar() {},
+    };
+  }
+
+  function crearEfecto(THREE, raiz, r, suelo) {
+    const ancla = new THREE.Group();
+    ancla.position.set(r.x || 0, r.y || 0, 0);
+    ancla.rotation.z = U.rad(r.giro);
+    raiz.add(ancla);
+    const orient = new THREE.Group();
+    if (suelo) orient.rotation.x = Math.PI / 2; // imagen en mesa o suelo: el efecto crece hacia arriba
+    ancla.add(orient);
+    const ge = new THREE.Group();
+    ge.scale.setScalar(r.escala || 1);
+    orient.add(ge);
+    const f = (ESCENAS[r.efecto] || ESCENAS.destello)(THREE, ge, r);
+    return { activar() {}, desactivar() {}, actualizar: f };
+  }
+
+  /* ---------- Todo lo que muestra un source al reconocerlo (en un idioma) ---------- */
+  function crearContenido(THREE, raiz, source, urls, idioma) {
+    urls = urls || {};
+    const suelo = source.apoyo === 'suelo';
+    const partes = [];
+    let conEfecto = false;
+    for (const r of source.resultados || []) {
+      if (estaOculto(r, idioma)) continue;
+      const url = urls[r.id];
+      try {
+        if (r.tipo === 'efecto') { partes.push(crearEfecto(THREE, raiz, r, suelo)); conEfecto = true; }
+        else if (r.tipo === 'video' && url) partes.push(crearVideo(THREE, raiz, r, url));
+        else if (r.tipo === 'modelo' && url) partes.push(crearModelo(THREE, raiz, r, url, suelo));
+        else if (r.tipo === 'imagen' && url) partes.push(crearImagen(THREE, raiz, r, url));
+        else if (r.tipo === 'audio' && url) partes.push(crearAudio(r, url));
+      } catch (e) { console.error('[ar] No se pudo preparar un resultado', r.tipo, e); }
+    }
+    let aviso = null;
+    if (!conEfecto) { const g = new THREE.Group(); raiz.add(g); aviso = despertar(THREE, g, null); } // anillo de «reconocido»
+    return {
+      medios: partes.map(p => p.medio).filter(Boolean),
+      activar() { partes.forEach(p => p.activar()); },
+      desactivar() { partes.forEach(p => p.desactivar()); },
+      actualizar(t, dt) { if (aviso) aviso(t); partes.forEach(p => p.actualizar(t, dt)); },
+    };
+  }
+
+  /* ---------- Quita lo que creó crearContenido: para el sonido y libera la memoria ---------- */
+  function liberar(grupo, contenido) {
+    if (contenido) {
+      try { contenido.desactivar(); } catch (e) { /* nada */ }
+      (contenido.medios || []).forEach(m => { try { m.pause(); m.removeAttribute('src'); m.load(); } catch (e) { /* nada */ } });
+    }
+    if (!grupo) return;
+    grupo.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) [].concat(o.material).forEach(m => { if (m.map && m.map.isVideoTexture) m.map.dispose(); m.dispose(); });
+    });
+    while (grupo.children.length) grupo.remove(grupo.children[0]);
+  }
+
+  /* ---------- Marca de un signo detectado pero aún dormido ---------- */
+  function crearMarca(THREE) {
+    if (!cache.geoAro) { cache.geoAro = new THREE.RingGeometry(0.15, 0.178, 48); cache.geoPunto = new THREE.CircleGeometry(0.032, 20); }
+    const mat = () => new THREE.MeshBasicMaterial({ color: 0xf3ede2, transparent: true, opacity: 0.92, depthWrite: false, side: THREE.DoubleSide });
+    const aro = new THREE.Mesh(cache.geoAro, mat()), punto = new THREE.Mesh(cache.geoPunto, mat());
+    aro.position.z = punto.position.z = 0.012;
+    const marca = new THREE.Group(); marca.add(aro, punto);
+    marca.userData.pintar = (time, fase, visto) => {
+      marca.scale.setScalar(1 + 0.09 * Math.sin(time / 320 + fase));
+      const c = visto ? 0xe2924f : 0xf3ede2;
+      aro.material.color.setHex(c); punto.material.color.setHex(c);
+    };
+    return marca;
+  }
+
+  /* =====================================================================
+     NARRADOR: voz del sistema en el idioma de cada texto, con aviso de fin
+     ===================================================================== */
+  const Narrador = {
+    activo: true, voces: [], elegidas: {}, audio: null, temporizador: null, turno: 0,
+    config() { return (window.HISTORIA && window.HISTORIA.voz) || {}; },
+    iniciar() {
+      if (!('speechSynthesis' in window)) return;
+      const cargar = () => { try { this.voces = window.speechSynthesis.getVoices() || []; } catch (e) { this.voces = []; } this.elegidas = {}; };
+      cargar();
+      try { window.speechSynthesis.addEventListener('voiceschanged', cargar); } catch (e) { window.speechSynthesis.onvoiceschanged = cargar; }
+    },
+    // La mejor voz del móvil para un idioma: primero la variante preferida (es-ES, en-GB…), luego cualquiera del idioma
+    vozPara(idioma) {
+      if (!this.voces.length && 'speechSynthesis' in window) { try { this.voces = window.speechSynthesis.getVoices() || []; } catch (e) { /* sin voces */ } }
+      if (idioma in this.elegidas) return this.elegidas[idioma];
+      const info = infoIdioma(idioma), prefs = (info ? info.voz : [idioma]).map(p => p.toLowerCase());
+      const lang = v => String(v.lang || '').replace('_', '-').toLowerCase();
+      const buena = /google|natural|neural|premium|enhanced|mejorad|siri/i;
+      let elegida = null;
+      for (const p of prefs) {
+        const cand = this.voces.filter(v => (p.includes('-') ? lang(v) === p : lang(v).split('-')[0] === p));
+        if (cand.length) { elegida = cand.find(v => buena.test(v.name)) || cand.find(v => v.localService) || cand[0]; break; }
+      }
+      if (this.voces.length) this.elegidas[idioma] = elegida; // con la lista aún vacía se vuelve a buscar
+      return elegida;
+    },
+    desbloquear() { // dentro de un toque del usuario (iOS lo exige)
+      try { const u = new window.SpeechSynthesisUtterance(' '); u.volume = 0; window.speechSynthesis.speak(u); } catch (e) { /* sin voz */ }
+      try { this.audio = this.audio || new window.Audio(); this.audio.muted = true; const p = this.audio.play(); if (p) p.catch(() => {}); this.audio.pause(); this.audio.muted = false; } catch (e) { /* sin audio */ }
+    },
+    decir(texto, archivo, alTerminar, idioma) {
+      this.callar();
+      texto = texto || '';
+      const turno = ++this.turno;
+      const fin = () => { if (turno === this.turno) { this.turno++; if (alTerminar) alTerminar(); } };
+      const porTiempo = () => { clearTimeout(this.temporizador); this.temporizador = setTimeout(fin, Math.max(4500, texto.length * 62)); };
+      if (!this.activo || !texto) return porTiempo();
+      if (archivo) {
+        try {
+          this.audio = this.audio || new window.Audio();
+          this.audio.src = archivo; this.audio.onended = fin; this.audio.onerror = porTiempo;
+          const p = this.audio.play(); if (p) p.catch(porTiempo);
+          return;
+        } catch (e) { return porTiempo(); }
+      }
+      if (!('speechSynthesis' in window)) return porTiempo();
+      const l = idioma || Idioma.actual, info = infoIdioma(l), voz = this.vozPara(l);
+      if (this.voces.length && !voz) return porTiempo(); // el móvil no tiene voz en ese idioma: solo subtítulos
+      const u = new window.SpeechSynthesisUtterance(texto);
+      u.lang = String(voz ? voz.lang : (info ? info.voz[0] : l)).replace('_', '-');
+      if (voz) u.voice = voz;
+      u.rate = this.config().velocidad || 0.96;
+      u.onend = fin;
+      u.onerror = porTiempo; // sin voz: se respeta el tiempo de lectura
+      window.speechSynthesis.speak(u);
+      this.temporizador = setTimeout(fin, Math.max(9000, texto.length * 95)); // por si el móvil no avisa del final
+    },
+    callar() {
+      clearTimeout(this.temporizador);
+      try { window.speechSynthesis.cancel(); } catch (e) { /* nada */ }
+      try { if (this.audio) { this.audio.onended = null; this.audio.pause(); } } catch (e) { /* nada */ }
+    },
+  };
+
+  /* =====================================================================
+     INTERFAZ de la appweb: idioma, miniaturas de progreso, textos, pistas y final
+     ===================================================================== */
+  const $ = id => document.getElementById(id);
+  const escapar = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const frase = t => (/[.!?…:;]$/.test(t) ? t : t + '.');
+
+  const Interfaz = {
+    vistos: new Set(), activo: null, visible: null, narrando: false, finMostrado: false,
+    temporPista: null, temporOcultar: null, temporFin: null, ultimoFin: 0, alCambiar: null, alCambiarIdioma: null, genPista: null,
+    sources: () => window.HISTORIA.sources,
+    source(id) { return this.sources().find(s => s.id === id); },
+    textoDe: s => (s.resultados || []).find(r => r.tipo === 'texto' && !estaOculto(r, Idioma.actual) && (Idioma.texto(r.titulo) || Idioma.texto(r.texto))),
+
+    iniciar() {
+      const H = window.HISTORIA, n = H.sources.length;
+      const mini = s => `<img class="mini" data-id="${escapar(s.id)}" src="${escapar(s.miniatura)}" alt="">`;
+      document.querySelectorAll('[data-minis]').forEach(el => {
+        const max = el.classList.contains('minis-grande') ? 12 : Infinity; // en la portada, como mucho 12
+        el.innerHTML = H.sources.slice(0, max).map(mini).join('') + (n > max ? `<span class="mini mas">+${n - max}</span>` : '');
+      });
+      document.body.classList.toggle('muchos', n > 10); // con muchos sources, la barra solo muestra el contador
+      const bs = $('btn-sonido'); if (bs) bs.addEventListener('click', () => this.alternarSonido());
+      const br = $('btn-reiniciar'); if (br) br.addEventListener('click', () => this.reiniciar());
+      const bi = $('btn-idioma'), li = $('lista-idioma');
+      if (bi && li) {
+        bi.addEventListener('click', e => { e.stopPropagation(); this.menuIdioma(li.hidden); });
+        document.addEventListener('click', e => { if (!li.hidden && !e.target.closest('#lista-idioma')) this.menuIdioma(false); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !li.hidden) { this.menuIdioma(false); bi.focus(); } });
+      }
+      document.addEventListener('click', e => { const b = e.target.closest('[data-idioma]'); if (b) this.cambiarIdioma(b.dataset.idioma); });
+      this.pintarTextos();
+    },
+
+    /* --- Idioma --- */
+    pintarTextos() {
+      const H = window.HISTORIA, titulo = Idioma.texto(H.titulo);
+      document.documentElement.lang = Idioma.actual;
+      if (titulo) document.title = titulo;
+      document.querySelectorAll('[data-t]').forEach(el => { el.textContent = Idioma.t(el.dataset.t); });
+      document.querySelectorAll('[data-t-aria]').forEach(el => { el.setAttribute('aria-label', Idioma.t(el.dataset.tAria)); });
+      document.querySelectorAll('[data-titulo]').forEach(el => { el.textContent = titulo; el.lang = Idioma.de(H.titulo); });
+      document.querySelectorAll('[data-intro]').forEach(el => { el.textContent = Idioma.texto(H.intro); el.lang = Idioma.de(H.intro); });
+      document.querySelectorAll('.mini[data-id]').forEach(el => { const s = this.source(el.dataset.id); if (s) el.alt = Idioma.texto(s.nombre); });
+      this.pintarSelectores();
+      this.etiquetaSonido();
+      this.actualizar();
+      const f = $('final'); if (f && !f.hidden) { $('final-texto').textContent = Idioma.texto(H.final); $('final-texto').lang = Idioma.de(H.final); }
+      const p = $('pista'); if (p && this.genPista && p.classList.contains('visible')) p.textContent = this.genPista();
+    },
+    pintarSelectores() {
+      const L = Idioma.disponibles, varios = L.length > 1;
+      const op = (id, menu) => menu
+        ? `<li role="none"><button type="button" role="menuitemradio" aria-checked="${id === Idioma.actual}" data-idioma="${id}" lang="${id}">${escapar(Idioma.nombre(id))}</button></li>`
+        : `<button type="button" class="idioma-op" aria-pressed="${id === Idioma.actual}" data-idioma="${id}" lang="${id}">${escapar(Idioma.nombre(id))}</button>`;
+      document.querySelectorAll('[data-idiomas]').forEach(el => { el.hidden = !varios; el.innerHTML = varios ? L.map(id => op(id, false)).join('') : ''; });
+      const m = $('menu-idioma'); if (m) m.hidden = !varios;
+      const li = $('lista-idioma'); if (li) li.innerHTML = varios ? L.map(id => op(id, true)).join('') : '';
+      const c = $('idioma-corto'); if (c) c.textContent = Idioma.actual.toUpperCase();
+      const b = $('btn-idioma'); if (b) b.setAttribute('aria-label', `${Idioma.t('idioma')}: ${Idioma.nombre(Idioma.actual)}`);
+    },
+    menuIdioma(abrir) {
+      const bi = $('btn-idioma'), li = $('lista-idioma'); if (!bi || !li) return;
+      li.hidden = !abrir; bi.setAttribute('aria-expanded', String(!!abrir));
+      if (abrir) { const b = li.querySelector('[aria-checked="true"]') || li.querySelector('button'); if (b) b.focus(); }
+    },
+    cambiarIdioma(id) {
+      const desdeMenu = !!(document.activeElement && document.activeElement.closest && document.activeElement.closest('#lista-idioma'));
+      const cambiado = Idioma.cambiar(id, true);
+      this.menuIdioma(false);
+      if (desdeMenu) { const bi = $('btn-idioma'); if (bi) bi.focus(); }
+      if (!cambiado) return;
+      console.log('[signos] idioma ' + Idioma.actual);
+      this.pintarTextos();
+      if (this.alCambiarIdioma) this.alCambiarIdioma(Idioma.actual);
+      if (this.visible) {
+        const s = this.source(this.visible), tx = s && this.textoDe(s);
+        if (tx) this.subtitulo(s, tx); else this.ocultarSubtitulo();
+      }
+      if (this.narrando && this.activo) this.narrar(this.activo); // lo que estaba contando, ahora en el idioma nuevo
+    },
+
+    /* --- Signos --- */
+    mostrarSigno(id) {
+      const s = this.source(id);
+      if (!s) return;
+      this.visible = id;
+      clearTimeout(this.temporPista); clearTimeout(this.temporOcultar);
+      this.pista(null);
+      const tx = this.textoDe(s);
+      if (tx) this.subtitulo(s, tx); else this.ocultarSubtitulo();
+      const repetido = this.activo === id && (this.narrando || performance.now() - this.ultimoFin < 15000);
+      if (repetido) return;
+      this.activo = id;
+      this.vistos.add(id);
+      this.actualizar();
+      try { if (navigator.vibrate) navigator.vibrate(30); } catch (e) { /* sin vibración */ }
+      this.narrar(id);
+      if (this.alCambiar) this.alCambiar(id);
+    },
+    narrar(id) {
+      const s = this.source(id), tx = s && this.textoDe(s);
+      this.narrando = true;
+      clearTimeout(this.temporFin);
+      if (tx && tx.voz !== false) {
+        const titulo = Idioma.texto(tx.titulo), texto = Idioma.texto(tx.texto);
+        const dicho = [titulo && frase(titulo), texto].filter(Boolean).join(' ');
+        Narrador.decir(dicho, null, () => this.finNarracion(id), Idioma.de(texto ? tx.texto : tx.titulo));
+      } else {
+        Narrador.callar();
+        this.temporFin = setTimeout(() => this.finNarracion(id), tx ? Math.max(4500, Idioma.texto(tx.texto).length * 62) : 5000);
+      }
+    },
+
+    perderSigno(id) {
+      if (this.visible === id) this.visible = null;
+      clearTimeout(this.temporPista);
+      this.temporPista = setTimeout(() => { if (!this.visible) this.sugerir(); }, 2600);
+      this.programarOcultar();
+    },
+
+    finNarracion(id) {
+      this.narrando = false; this.ultimoFin = performance.now();
+      if (Idioma.texto(window.HISTORIA.final) && this.vistos.size === this.sources().length && !this.finMostrado) {
+        this.finMostrado = true;
+        setTimeout(() => this.mostrarFinal(), 1200);
+        return;
+      }
+      this.programarOcultar();
+      if (!this.visible || this.visible === id) {
+        clearTimeout(this.temporPista);
+        this.temporPista = setTimeout(() => this.sugerir(), 3500);
+      }
+    },
+
+    programarOcultar() {
+      clearTimeout(this.temporOcultar);
+      this.temporOcultar = setTimeout(() => { if (!this.visible && !this.narrando) this.ocultarSubtitulo(); }, 3000);
+    },
+
+    subtitulo(s, tx) {
+      const caja = $('subtitulo'); if (!caja) return;
+      const titulo = Idioma.texto(tx.titulo), texto = Idioma.texto(tx.texto);
+      $('subt-icono').innerHTML = `<img src="${escapar(s.miniatura)}" alt="">`;
+      $('subt-titulo').textContent = titulo;
+      $('subt-titulo').hidden = !titulo;
+      $('subt-titulo').lang = Idioma.de(tx.titulo);
+      $('subt-texto').textContent = texto;
+      $('subt-texto').lang = Idioma.de(tx.texto);
+      caja.hidden = false;
+      requestAnimationFrame(() => caja.classList.add('visible'));
+    },
+    ocultarSubtitulo() { const c = $('subtitulo'); if (c) c.classList.remove('visible'); },
+
+    // La pista se guarda como función para volver a escribirla si cambia el idioma
+    pista(gen) {
+      const p = $('pista'); if (!p) return;
+      this.genPista = typeof gen === 'function' ? gen : (gen ? () => gen : null);
+      if (!this.genPista) { p.classList.remove('visible'); return; }
+      p.textContent = this.genPista(); p.classList.add('visible');
+    },
+    sugerir() {
+      const faltan = this.sources().filter(s => !this.vistos.has(s.id));
+      if (!faltan.length) return;
+      this.pista(() => {
+        if (faltan.length > 3) return Idioma.t('quedan', { n: faltan.length });
+        const nombres = faltan.map(s => Idioma.texto(s.nombre) || Idioma.t('unaImagen'));
+        return Idioma.t(nombres.length === 1 ? 'falta1' : 'faltan', { lista: Idioma.lista(nombres) });
+      });
+    },
+
+    actualizar() {
+      document.querySelectorAll('.mini[data-id]').forEach(el => {
+        el.classList.toggle('visto', this.vistos.has(el.dataset.id));
+        el.classList.toggle('activo', this.activo === el.dataset.id);
+      });
+      const c = $('contador'); if (c) c.textContent = Idioma.t('contador', { n: this.vistos.size, total: this.sources().length });
+    },
+
+    etiquetaSonido() {
+      const b = $('btn-sonido'); if (!b) return;
+      b.setAttribute('aria-pressed', String(Narrador.activo));
+      b.setAttribute('aria-label', Idioma.t(Narrador.activo ? 'silenciar' : 'activarVoz'));
+      b.classList.toggle('apagado', !Narrador.activo);
+    },
+    alternarSonido() {
+      Narrador.activo = !Narrador.activo;
+      if (!Narrador.activo) Narrador.callar();
+      this.etiquetaSonido();
+    },
+
+    mostrarFinal() {
+      const f = $('final'); if (!f) return;
+      const H = window.HISTORIA, texto = Idioma.texto(H.final);
+      $('final-texto').textContent = texto;
+      $('final-texto').lang = Idioma.de(H.final);
+      this.ocultarSubtitulo(); this.pista(null);
+      f.hidden = false;
+      if (texto) Narrador.decir(texto, null, () => {}, Idioma.de(H.final));
+    },
+
+    reiniciar() {
+      Narrador.callar();
+      this.vistos.clear(); this.activo = null; this.finMostrado = false; this.narrando = false;
+      const f = $('final'); if (f) f.hidden = true;
+      this.ocultarSubtitulo(); this.actualizar();
+      if (this.alCambiar) this.alCambiar(null);
+    },
+
+    modoLejos(activo) {
+      const r = $('reticula'); if (r) r.hidden = !activo;
+      document.body.classList.toggle('lejos', !!activo);
+      if (activo && !this.visible) { clearTimeout(this.temporPista); this.pista(() => Idioma.t('centra')); }
+      else if (!activo) this.pista(null);
+    },
+    reticula(progreso, fijado) {
+      const r = $('reticula'); if (!r) return;
+      r.style.setProperty('--p', progreso.toFixed(3));
+      r.classList.toggle('fijada', !!fijado);
+    },
+  };
+
+  window.Motor = {
+    U, ICONOS, iconoSVG, EFECTOS, TIPOS, ESCENAS, IDIOMAS, UI, Idioma, infoIdioma, estaOculto, archivoEn,
+    crearContenido, liberar, crearMarca, prepararTextura, Narrador, Interfaz, escapar, Stickman: STICK,
+  };
+  return window.Motor;
+})(window);
+</script>
+</head>
+<body class="modo-ar">
+<div id="contenedor-ar"></div>
+
+<div id="hud" hidden>
+  <header class="barra">
+    <div class="progreso"><div class="minis" data-minis></div><span id="contador" class="contador"></span></div>
+    <div class="acciones-barra">
+      <div id="menu-idioma" class="menu-idioma" hidden>
+        <button id="btn-idioma" class="boton-icono boton-idioma" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="lista-idioma"><span id="idioma-corto"></span></button>
+        <ul id="lista-idioma" class="lista-idioma" role="menu" hidden></ul>
+      </div>
+      <button id="btn-sonido" class="boton-icono" type="button" aria-pressed="true" aria-label="Silenciar la voz">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/><path class="ondas" d="M15.5 9a4 4 0 0 1 0 6M18.2 6.5a7.5 7.5 0 0 1 0 11"/><path class="tachado" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="visor" aria-hidden="true"></div>
+  <div id="reticula" class="reticula" hidden aria-hidden="true"><svg viewBox="0 0 100 100"><circle class="aro" cx="50" cy="50" r="46"/><circle class="carga" cx="50" cy="50" r="46"/></svg></div>
+  <p id="pista" class="pista" role="status"></p>
+  <section id="subtitulo" class="subtitulo" hidden aria-live="polite">
+    <span id="subt-icono" class="subt-icono"></span>
+    <div class="subt-cuerpo"><h2 id="subt-titulo"></h2><p id="subt-texto"></p></div>
+  </section>
+</div>
+
+<section id="portada" class="portada">
+  <nav class="idiomas" data-idiomas data-t-aria="idioma" aria-label="Idioma" hidden></nav>
+  <p class="etiqueta" data-t="etiqueta">Realidad aumentada</p>
+  <h1 data-titulo></h1>
+  <div class="minis minis-grande" data-minis></div>
+  <p class="intro" data-intro></p>
+  <button id="btn-empezar" class="boton" type="button" data-t="empezar">Empezar</button>
+  <p class="nota" data-t="nota">Usa la cámara trasera y sube el volumen.</p>
+</section>
+
+<section id="cargando" class="aviso" hidden>
+  <div class="tarjeta"><div class="girando" aria-hidden="true"></div><p data-t="abriendo">Abriendo la cámara…</p></div>
+</section>
+
+<section id="error" class="aviso" hidden>
+  <div class="tarjeta">
+    <h2 data-t="errorTitulo">No se pudo empezar</h2>
+    <p id="error-texto"></p>
+    <button id="btn-reintentar" class="boton" type="button" data-t="reintentar">Reintentar</button>
+  </div>
+</section>
+
+<section id="final" class="aviso" hidden>
+  <div class="tarjeta">
+    <p class="etiqueta" data-t="todas">Todas descubiertas</p>
+    <div class="minis" data-minis></div>
+    <h2 id="final-texto"></h2>
+    <button id="btn-reiniciar" class="boton" type="button" data-t="deNuevo">Empezar de nuevo</button>
+  </div>
+</section>
+
+<div id="depuracion" class="depuracion" hidden></div>
+
+<script>
+(function appSignosAR(window) {
+  'use strict';
+  const document = window.document, AFRAME = window.AFRAME, Motor = window.Motor, H = window.HISTORIA;
+  const A = Object.assign({ archivo: 'targets.mind', filtroMinCF: 0.0005, filtroBeta: 300, toleranciaPerdida: 6, calentamiento: 3, seguimientoSimultaneo: 3, permanencia: 0.9 }, H.ajustesAR || {});
+  const $ = id => document.getElementById(id);
+  const depurar = /depurar/.test(window.location.search);
+  const avisar = (id, visible) => window.dispatchEvent(new window.CustomEvent('signos:objetivo', { detail: { id, visible } }));
+  const componentes = []; // un «signo» por source
+  // Vídeos y audios con sonido: se desbloquean con un toque del visitante (Empezar o cambiar de idioma)
+  const conSonido = () => componentes.flatMap(c => (c.escena ? c.escena.medios.filter(m => !m.muted) : []));
+  const desbloquear = medios => medios.forEach(m => {
+    if (m.muted || !m.paused) return;
+    try { const p = m.play(); if (p) p.then(() => m.pause()).catch(() => {}); } catch (e) { /* nada */ }
+  });
+
+  Motor.Idioma.iniciar(H);
+  console.log('[signos] idioma ' + Motor.Idioma.actual);
+
+  AFRAME.registerSystem('selector-signos', {
+    init() {
+      this.lista = []; this.activo = null; this.candidato = null; this.espera = 0; this.lejos = false;
+      const V = AFRAME.THREE.Vector3; this.v = new V(); this.a = new V(); this.b = new V();
+    },
+    registrar(c) { this.lista.push(c); },
+    anchoEnPantalla(c, w, h) { // ancho del dibujo en píxeles de pantalla
+      const m = c.el.object3D.matrixWorld, cam = this.el.camera;
+      this.a.set(-0.5, 0, 0).applyMatrix4(m).project(cam);
+      this.b.set(0.5, 0, 0).applyMatrix4(m).project(cam);
+      return Math.hypot((this.a.x - this.b.x) * w / 2, (this.a.y - this.b.y) * h / 2);
+    },
+    tick(time, dt) {
+      if (!this.lista.length) return;
+      const I = Motor.Interfaz, d = Math.min(dt || 16, 60) / 1000;
+      const vis = this.lista.filter(c => c.visible);
+      if (!vis.length) { if (this.lejos) { this.lejos = false; I.modoLejos(false); } return; }
+      const lienzo = this.el.canvas, w = lienzo.clientWidth, h = lienzo.clientHeight;
+      for (const c of vis) c.el.object3D.updateMatrixWorld(true);
+      const ancho = this.anchoEnPantalla(vis[0], w, h);
+      if (!isFinite(ancho)) return;
+      const lejos = vis.length >= 2 || ancho < Math.min(w, h) * 0.6;
+      if (lejos !== this.lejos) { this.lejos = lejos; I.modoLejos(lejos); this.candidato = null; this.espera = 0; }
+      if (!lejos) { if (this.activo !== vis[0]) this.activar(vis[0]); return; }
+      let mejor = null, dmin = Infinity;
+      for (const c of vis) {
+        this.v.setFromMatrixPosition(c.centro.matrixWorld).project(this.el.camera);
+        const dd = Math.hypot(this.v.x * w / 2, this.v.y * h / 2);
+        if (dd < dmin) { dmin = dd; mejor = c; }
+      }
+      const dentro = dmin < Math.min(w, h) * 0.17 ? mejor : null;
+      if (dentro && dentro === this.activo) { I.reticula(1, true); this.candidato = dentro; this.espera = 0; return; }
+      if (dentro !== this.candidato) { this.candidato = dentro; this.espera = 0; }
+      if (!dentro) { I.reticula(0, false); return; }
+      this.espera += d;
+      const p = Math.min(1, this.espera / A.permanencia);
+      I.reticula(p, false);
+      if (p >= 1) this.activar(dentro);
+    },
+    activar(c) {
+      if (this.activo && this.activo !== c) this.activo.desactivar();
+      this.activo = c;
+      c.activar();
+    },
+    perder(c) {
+      if (this.activo !== c) return;
+      c.desactivar();
+      this.activo = null;
+      Motor.Interfaz.perderSigno(c.source.id);
+    },
+  });
+
+  AFRAME.registerComponent('signo', {
+    schema: { indice: { type: 'int' } },
+    init() {
+      const THREE = AFRAME.THREE;
+      this.source = H.sources[this.data.indice];
+      this.contenido = new THREE.Group();
+      this.contenido.visible = false;
+      this.el.object3D.add(this.contenido);
+      this.construir();
+      this.centro = new THREE.Object3D();
+      this.el.object3D.add(this.centro);
+      this.marca = Motor.crearMarca(THREE);
+      this.el.object3D.add(this.marca);
+      this.fase = this.data.indice * 1.3;
+      this.visible = false; this.activo = false; this.t = 0; this.perdidoEn = -1e9;
+      componentes.push(this);
+      this.sel = this.el.sceneEl.systems['selector-signos'];
+      this.sel.registrar(this);
+      this.el.addEventListener('targetFound', () => { this.visible = true; avisar(this.source.id, true); });
+      this.el.addEventListener('targetLost', () => {
+        this.visible = false; this.perdidoEn = window.performance.now();
+        this.sel.perder(this); avisar(this.source.id, false);
+      });
+    },
+    // Qué se ve en el idioma actual: resultados ocultos y archivos con versión propia
+    firma() {
+      const l = Motor.Idioma.actual;
+      return JSON.stringify((this.source.resultados || []).map(r => [r.id, Motor.estaOculto(r, l), Motor.archivoEn(r, l)]));
+    },
+    construir() {
+      const l = Motor.Idioma.actual, urls = {};
+      (this.source.resultados || []).forEach(r => { const u = Motor.archivoEn(r, l); if (u) urls[r.id] = u; });
+      this.escena = Motor.crearContenido(AFRAME.THREE, this.contenido, this.source, urls, l);
+      this.hecho = this.firma();
+    },
+    // Al cambiar de idioma solo se rehace el source que cambia; devuelve sus medios nuevos
+    rehacer() {
+      if (this.firma() === this.hecho) return [];
+      Motor.liberar(this.contenido, this.escena);
+      this.construir();
+      if (this.activo) { this.t = 0; this.escena.activar(); }
+      console.log(`[signos] rehecho ${this.source.id} en ${Motor.Idioma.actual}`);
+      return this.escena.medios;
+    },
+    activar() {
+      if (this.activo) return;
+      this.activo = true;
+      if (window.performance.now() - this.perdidoEn > 2500) this.t = 0; // un parpadeo no reinicia la animación
+      this.contenido.visible = true;
+      this.escena.activar();
+      Motor.Interfaz.mostrarSigno(this.source.id);
+    },
+    desactivar() { this.activo = false; this.contenido.visible = false; this.escena.desactivar(); },
+    tick(time, dt) {
+      if (!this.visible) return;
+      this.marca.visible = !this.activo;
+      if (!this.activo) { this.marca.userData.pintar(time, this.fase, Motor.Interfaz.vistos.has(this.source.id)); return; }
+      const d = Math.min(dt || 16, 60) / 1000;
+      this.t += d;
+      this.escena.actualizar(this.t, d);
+    },
+  });
+
+  /* --- Escena --- */
+  const escena = document.createElement('a-scene');
+  const atributos = {
+    'mindar-image': `imageTargetSrc: ${A.archivo}; autoStart: false; maxTrack: ${A.seguimientoSimultaneo}; uiLoading: no; uiScanning: no; uiError: no; ` +
+      `filterMinCF: ${A.filtroMinCF}; filterBeta: ${A.filtroBeta}; missTolerance: ${A.toleranciaPerdida}; warmupTolerance: ${A.calentamiento}`,
+    embedded: '', 'color-space': 'sRGB', renderer: 'colorManagement: true; antialias: true; alpha: true',
+    'vr-mode-ui': 'enabled: false', 'xr-mode-ui': 'enabled: false',
+    'device-orientation-permission-ui': 'enabled: false', 'loading-screen': 'enabled: false',
+  };
+  for (const k in atributos) escena.setAttribute(k, atributos[k]);
+  escena.innerHTML =
+    '<a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>' +
+    '<a-entity light="type: ambient; color: #fff4e8; intensity: 0.85"></a-entity>' +
+    '<a-entity light="type: directional; color: #ffffff; intensity: 1.0" position="0.6 1 1.2"></a-entity>';
+  H.sources.forEach((s, i) => {
+    const e = document.createElement('a-entity');
+    e.setAttribute('mindar-image-target', `targetIndex: ${i}`);
+    e.setAttribute('signo', `indice: ${i}`);
+    escena.appendChild(e);
+  });
+  $('contenedor-ar').appendChild(escena);
+
+  Motor.Narrador.iniciar();
+  Motor.Interfaz.iniciar();
+  Motor.Interfaz.alCambiar = id => { if (id) console.log('[signos] despierta ' + id); };
+
+  /* --- Pantallas --- */
+  const portada = $('portada'), hud = $('hud'), cargando = $('cargando'), error = $('error');
+  let renderListo = false, pedido = false, listo = false, arrancado = false, tipoError = null;
+  function mostrarError(tipo) {
+    tipoError = tipo;
+    cargando.hidden = true; hud.hidden = true;
+    $('error-texto').textContent = Motor.Idioma.t(tipo === 'camara' ? 'errorCamara' : 'errorMarcadores');
+    error.hidden = false;
+  }
+  function arrancar() {
+    if (arrancado) return;
+    arrancado = true;
+    try { escena.systems['mindar-image-system'].start(); } catch (e) { console.error(e); mostrarError('marcadores'); }
+    setTimeout(() => { if (!listo && error.hidden) mostrarError('marcadores'); }, 30000);
+  }
+  escena.addEventListener('renderstart', () => { renderListo = true; if (pedido) arrancar(); });
+  escena.addEventListener('arReady', () => {
+    listo = true; cargando.hidden = true; hud.hidden = false;
+    Motor.Interfaz.pista(() => Motor.Idioma.t('apunta'));
+    console.log('[signos] AR lista');
+  });
+  escena.addEventListener('arError', () => mostrarError('camara'));
+  window.addEventListener('unhandledrejection', e => { if (!listo && arrancado) { console.error('[signos]', e.reason); mostrarError('marcadores'); } });
+  $('btn-empezar').addEventListener('click', () => {
+    Motor.Narrador.desbloquear();
+    desbloquear(conSonido());
+    portada.hidden = true; cargando.hidden = false;
+    pedido = true;
+    if (renderListo) arrancar();
+  });
+  $('btn-reintentar').addEventListener('click', () => window.location.reload());
+
+  // Cambiar de idioma es un toque: se rehacen los sources con versión propia y se desbloquea su sonido
+  Motor.Interfaz.alCambiarIdioma = () => {
+    const nuevos = [];
+    componentes.forEach(c => nuevos.push(...c.rehacer()));
+    desbloquear(nuevos);
+    if (!error.hidden && tipoError) $('error-texto').textContent = Motor.Idioma.t(tipoError === 'camara' ? 'errorCamara' : 'errorMarcadores');
+  };
+
+  const visibles = new Set();
+  window.addEventListener('signos:objetivo', e => {
+    const { id, visible } = e.detail;
+    if (visible) visibles.add(id); else visibles.delete(id);
+    document.body.classList.toggle('viendo', visibles.size > 0);
+    console.log(`[signos] ${visible ? 'veo' : 'pierdo'} ${id}`);
+    if (depurar) $('depuracion').textContent = 'Visibles: ' + ([...visibles].join(', ') || 'ninguno') + ' · ' + Motor.Idioma.actual;
+  });
+  if (depurar) $('depuracion').hidden = false;
+  document.addEventListener('visibilitychange', () => { if (document.hidden) Motor.Narrador.callar(); });
+})(window);
+</script>
+</body>
+</html>

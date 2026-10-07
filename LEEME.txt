@@ -1,0 +1,28 @@
+Los signos de la madera
+=======================
+
+Appweb de realidad aumentada generada con el Taller de signos (MindAR + A-Frame).
+
+CÓMO PROBARLA
+1. Sube esta carpeta completa a un hosting con https (GitHub Pages, Netlify, Vercel o tu servidor).
+   La cámara del móvil solo funciona en páginas https.
+2. Abre index.html en el móvil y apunta a las imágenes disparadoras.
+3. Para probar sin ir al sitio: abre las imágenes de la carpeta sources/ en la pantalla del ordenador y apúntalas.
+4. Añade ?depurar a la dirección para ver qué imágenes detecta.
+
+IDIOMAS
+- Español (es), English (en). Principal: Español.
+- La appweb se abre en el idioma del móvil. Si no lo tiene, usa el principal.
+- El visitante puede cambiarlo en la portada o con el botón de idioma de arriba, y se recuerda.
+- Para abrirla en un idioma concreto (por ejemplo, un código QR por idioma), añade ?lang= a la dirección: index.html?lang=en
+- Lo que no esté traducido se muestra en el idioma principal.
+
+QUÉ HAY
+- index.html: la experiencia. Los textos, por idioma, están en window.HISTORIA, al principio.
+- targets.mind: los marcadores de todas las imágenes, en el orden del taller.
+- sources/: las imágenes disparadoras.
+- marcadores/: miniaturas para la interfaz.
+- resultados/: vídeos, modelos, imágenes y audios que subiste (los que acaban en -en, -de… son versiones por idioma).
+
+SOURCES
+1. lateral esqueleto pajaro: 3D, Efecto
